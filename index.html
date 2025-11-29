@@ -72,16 +72,16 @@ input.table-input {width:50px; background:#111; color:white; border:1px solid #4
 <div class="popup-row"><label>Notiz</label><textarea id="p_notiz" rows="2"></textarea></div>
 <div style="display:flex; gap:10px;">
 <button onclick="saveArtikel()" style="flex:1;">Speichern</button>
-<button onclick="document.getElementById('popup').style.display='none'" style="flex:1;">Abbrechen</button>
+<button onclick="document.getElementById('popup').style.display='none'; editIndex=null;" style="flex:1;">Abbrechen</button>
 </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
+// Teil 1: Daten und Testartikel
 let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let editIndex = null;
 
-// 200 Testartikel erzeugen
 if(artikel.length === 0){
     const names = ["Plüschtier","Puzzle","Bausteine","Actionfigur","Brettspiel","Lernspiel","Fahrradhelm","Sandkastenform","Knete-Set","Malkasten","Ritterburg","Dinosaurierfiguren","Taschenlampe","Fernglas","Kinderbuch","Spielzeugauto","Roboterset","Lego-Set","Musikinstrument","Puppenhaus"];
     const groessen = ["S","M","L","XL"];
@@ -113,7 +113,9 @@ if(artikel.length === 0){
     localStorage.setItem("lagerData", JSON.stringify(artikel));
 }
 
-updateCounters(); renderTable();
+</script>
+<script>
+// Teil 2: Pop-up, Speichern, Rendern, Zähler, Suche
 
 function getNextArtNr() {
     const currentYear = new Date().getFullYear();
@@ -141,7 +143,14 @@ function openPopup(){
     }
 }
 
-function formatDatum(d){ if(!d) return ""; const dt=new Date(d); const tag=("0"+dt.getDate()).slice(-2); const monat=("0"+(dt.getMonth()+1)).slice(-2); const jahr=dt.getFullYear(); return `${tag}-${monat}-${jahr}`; }
+function formatDatum(d){
+    if(!d) return "";
+    const dt=new Date(d);
+    const tag=("0"+dt.getDate()).slice(-2);
+    const monat=("0"+(dt.getMonth()+1)).slice(-2);
+    const jahr=dt.getFullYear();
+    return `${tag}-${monat}-${jahr}`;
+}
 
 function saveArtikel(){
     const n = document.getElementById("p_artnr").value.trim();
@@ -157,12 +166,18 @@ function saveArtikel(){
 
     function pushItem(b64){
         const obj={artnr:n,name,menge,groesse,preis,ort,datum,bild:b64,notiz};
-        if(editIndex!==null){ artikel[editIndex]=obj; editIndex=null; }
-        else artikel.push(obj);
+        if(editIndex!==null){ 
+            artikel[editIndex]=obj; 
+            editIndex=null; 
+        } else {
+            artikel.push(obj);
+        }
         localStorage.setItem("lagerData",JSON.stringify(artikel));
-        renderTable(); updateCounters();
+        renderTable(); 
+        updateCounters();
         document.getElementById("popup").style.display="none";
     }
+
     if(bildInput.files.length>0){
         const reader=new FileReader();
         reader.onload=function(e){ pushItem(e.target.result); }
@@ -171,7 +186,8 @@ function saveArtikel(){
 }
 
 function renderTable(){
-    const tbody=document.getElementById("tableBody"); tbody.innerHTML="";
+    const tbody=document.getElementById("tableBody"); 
+    tbody.innerHTML="";
     artikel.forEach((a,i)=>{
         const tr=document.createElement("tr");
         tr.innerHTML=`
@@ -203,7 +219,11 @@ function updateCounters(){
     document.getElementById("countWertTotal").innerText=wert.toFixed(2);
 }
 
-function updateMenge(i,v){ artikel[i].menge=Number(v); localStorage.setItem("lagerData",JSON.stringify(artikel)); updateCounters(); }
+function updateMenge(i,v){ 
+    artikel[i].menge=Number(v); 
+    localStorage.setItem("lagerData",JSON.stringify(artikel)); 
+    updateCounters(); 
+}
 
 function searchTable() {
     const q = document.getElementById("search").value.toLowerCase();
@@ -233,24 +253,88 @@ function searchTable() {
         }
     });
 }
+</script>
+<script>
+// Teil 3: PDF, Notiz, Bild, Markieren, Bearbeiten, Löschen
+
+function showNote(i){
+    alert(artikel[i].notiz || "Keine Notiz hinterlegt");
+}
+
+function showImage(i){
+    if(artikel[i].bild){
+        const w = window.open("");
+        const img = w.document.createElement("img");
+        img.src = artikel[i].bild;
+        img.style.maxWidth = "100%";
+        img.style.height = "auto";
+        w.document.body.style.background = "#000";
+        w.document.body.appendChild(img);
+    } else alert("Kein Bild vorhanden");
+}
+
+function toggleMark(i){
+    const tr = document.getElementById("tableBody").children[i];
+    if(tr.style.backgroundColor === "rgba(0,0,255,0.2)"){
+        tr.style.backgroundColor = "";
+    } else {
+        tr.style.backgroundColor = "rgba(0,0,255,0.2)";
+    }
+}
+
+function deleteItem(i){
+    if(confirm("Wirklich löschen?")){
+        artikel.splice(i,1);
+        localStorage.setItem("lagerData",JSON.stringify(artikel));
+        renderTable();
+        updateCounters();
+    }
+}
+
+function openEdit(i){
+    editIndex = i;
+    const a = artikel[i];
+    document.getElementById("popup").style.display="block";
+    document.getElementById("p_artnr").value = a.artnr;
+    document.getElementById("p_name").value = a.name;
+    document.getElementById("p_menge").value = a.menge;
+    document.getElementById("p_groesse").value = a.groesse;
+    document.getElementById("p_preis").value = a.preis;
+    document.getElementById("p_ort").value = a.ort;
+    document.getElementById("p_datum").value = a.datum;
+    document.getElementById("p_notiz").value = a.notiz;
+    document.getElementById("p_bild").value = "";
+}
 
 function exportData(){
-    const blob=new Blob([JSON.stringify(artikel)],{type:"application/json"});
-    const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="lager_sicherung.json"; a.click();
+    const blob = new Blob([JSON.stringify(artikel)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "lager_sicherung.json"; a.click();
 }
+
 function importData(){
-    const inp=document.createElement("input"); inp.type="file"; inp.accept="application/json";
-    inp.onchange=e=>{
-        const file=e.target.files[0]; const reader=new FileReader();
-        reader.onload=function(){ artikel=JSON.parse(reader.result); localStorage.setItem("lagerData",JSON.stringify(artikel)); renderTable(); updateCounters(); };
+    const inp = document.createElement("input");
+    inp.type="file"; inp.accept="application/json";
+    inp.onchange = e => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(){
+            artikel = JSON.parse(reader.result);
+            localStorage.setItem("lagerData", JSON.stringify(artikel));
+            renderTable();
+            updateCounters();
+        }
         reader.readAsText(file);
-    }; inp.click();
+    }
+    inp.click();
 }
+
 function generatePDF(){
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    const colWidths = [40, 70, 20, 50]; 
-    let startX = 10; let startY = 20; let rowHeight = 8;
+    const colWidths = [40,70,20,50]; 
+    const startX = 10; let startY = 20; const rowHeight = 8;
     doc.setFontSize(12); doc.setFont("helvetica","bold");
     doc.text("Inventur",105,10,{align:"center"});
     const headers = ["ArtNr","Name","Menge","Notiz"];
@@ -262,7 +346,7 @@ function generatePDF(){
     });
     let y=startY+rowHeight;
     doc.setFont("helvetica","normal"); doc.setFontSize(10);
-    artikel.forEach((a,i)=>{
+    artikel.forEach((a)=>{
         x=startX;
         if(y+rowHeight>290){ doc.addPage(); y=startY+rowHeight; }
         const values=[a.artnr,a.name,a.menge.toString(),a.notiz||"-"];
@@ -277,12 +361,8 @@ function generatePDF(){
     doc.save("inventur.pdf");
 }
 
-function showNote(i){ alert(artikel[i].notiz || "Keine Notiz hinterlegt"); }
-function showImage(i){
-    if(artikel[i].bild){
-        const w=window.open(""); const img=w.document.createElement("img");
-        img.src=artikel[i].bild; img.style.maxWidth="100%"; img.style.height="auto";
-        w.document.body.style.background="#000"; w.document.body.appendChild(img);
-    } else alert("Kein Bild vorhanden");
-}
-function deleteItem(i){ if(confirm("Willst du diesen Artikel
+// Initiales Rendern
+updateCounters(); renderTable();
+</script>
+</body>
+</html>

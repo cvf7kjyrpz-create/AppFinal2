@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Lager App</title>
+<link rel="manifest" href="manifest.json">
 <style>
 body {margin:0; background:#000; color:white; font-family:Arial, sans-serif; overflow:hidden;}
 #topbar {position:fixed; top:0; left:0; right:0; padding:15px; background:#000; z-index:9999; border-bottom:2px solid #333;}
@@ -11,8 +12,8 @@ body {margin:0; background:#000; color:white; font-family:Arial, sans-serif; ove
 .counter-box {padding:10px; border:1px solid #444; border-radius:10px; background:#000; box-shadow:0 4px 10px rgba(0,0,0,0.45);}
 .counter-title {font-size:11px;color:#bbb;}
 .counter-value {font-size:16px;font-weight:bold;}
-#searchRow {margin-top:10px; display:flex; justify-content:center;}
-#search {width:90%; padding:10px; border-radius:8px; background:#111; border:1px solid #444; color:white; box-sizing:border-box;}
+#searchRow {margin-top:10px; display:flex; justify-content:center; position:relative;}
+#search {width:80%; padding:10px; border-radius:8px; background:#111; border:1px solid #444; color:white; box-sizing:border-box;}
 #buttonRow {margin-top:10px; display:flex; gap:8px; touch-action:manipulation;}
 #buttonRow button {flex:1; padding:6px; font-size:10px; color:#bbb; border-radius:10px; background:#000; border:1px solid #444; font-weight:bold; box-shadow:0 4px 10px rgba(0,0,0,0.45);}
 #buttonRow button:active {background:#111;}
@@ -21,12 +22,15 @@ body {margin:0; background:#000; color:white; font-family:Arial, sans-serif; ove
 th {background:#111; position:sticky; top:0; z-index:5; padding:5px; color:#bbb; font-weight:bold;}
 td {padding:5px; border-bottom:1px solid #222; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;}
 #popup {position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#111; padding:10px; border:2px solid #444; border-radius:12px; width:90%; max-width:320px; max-height:90%; overflow-y:auto; display:none; z-index:10000; box-sizing:border-box;}
-.popup-row {margin-bottom:6px; display:flex; flex-direction:column;}
+.popup-row {margin-bottom:6px; display:flex; flex-direction:column; align-items:center;}
 .popup-row label {font-size:13px; margin-bottom:2px;}
-.popup-row input, .popup-row textarea {width:90%; margin:0 auto; padding:6px; border-radius:6px; border:1px solid #444; background:#1a1a1a; color:white; font-size:13px; box-sizing:border-box;}
+.popup-row input, .popup-row textarea {width:90%; padding:6px; border-radius:6px; border:1px solid #444; background:#1a1a1a; color:white; font-size:13px; box-sizing:border-box;}
 #popup button {padding:6px; border-radius:8px; background:#000; border:1px solid #444; color:white; font-weight:bold; font-size:12px; flex:1;}
 .icon-btn {cursor:pointer; margin-left:4px; font-size:14px;}
 input.table-input {width:50px; background:#111; color:white; border:1px solid #444; border-radius:4px; text-align:center;}
+#searchFilterPopup {position:absolute; top:40px; left:50%; transform:translateX(-50%); background:#111; border:1px solid #444; border-radius:8px; padding:5px; display:none; z-index:10001;}
+#searchFilterPopup label{color:white; font-size:12px;}
+#searchFilterPopup select {width:150px; margin-top:5px; padding:4px; border-radius:6px; background:#1a1a1a; color:white; border:1px solid #444;}
 </style>
 </head>
 <body>
@@ -39,7 +43,19 @@ input.table-input {width:50px; background:#111; color:white; border:1px solid #4
         <div class="counter-box"><div class="counter-title">Warenwert gesamt (€)</div><div class="counter-value" id="countWertTotal">0</div></div>
     </div>
     <div id="searchRow">
-        <input type="text" id="search" placeholder="Suchen …" oninput="searchTable()">
+        <input type="text" id="search" placeholder="Suchen …">
+        <div id="searchFilterPopup">
+          <label>Spalte wählen:</label>
+          <select id="searchColumn">
+            <option value="name">Name</option>
+            <option value="artnr">Artikelnummer</option>
+            <option value="menge">Menge</option>
+            <option value="groesse">Größe</option>
+            <option value="preis">Preis</option>
+            <option value="ort">Ort</option>
+            <option value="datum">Datum</option>
+          </select>
+        </div>
     </div>
     <div id="buttonRow">
         <button onclick="openPopup()">Artikel anlegen</button>
@@ -56,79 +72,48 @@ input.table-input {width:50px; background:#111; color:white; border:1px solid #4
 <th>ArtNr</th><th>Name</th><th>Menge</th><th>Größe</th><th>Preis</th><th>Ort</th><th>Gekauft</th><th>Aktionen</th>
 </tr>
 </thead>
-<tbody id="tableBody">
-<tr><td>001-2025</td><td>Plüschtier 1</td><td><input type="number" class="table-input" value="2"></td><td>M</td><td>19.99</td><td>Spielzeugladen</td><td>12-01-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>002-2025</td><td>Puzzle 5</td><td><input type="number" class="table-input" value="1"></td><td>L</td><td>12.50</td><td>Online-Shop</td><td>03-02-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>003-2025</td><td>Bausteine 8</td><td><input type="number" class="table-input" value="3"></td><td>S</td><td>25.00</td><td>Supermarkt</td><td>18-03-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>004-2025</td><td>Actionfigur 12</td><td><input type="number" class="table-input" value="2"></td><td>XL</td><td>29.99</td><td>Marktstand</td><td>22-04-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>005-2025</td><td>Brettspiel 7</td><td><input type="number" class="table-input" value="4"></td><td>M</td><td>15.00</td><td>Online-Shop</td><td>05-05-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>006-2025</td><td>Lernspiel 3</td><td><input type="number" class="table-input" value="1"></td><td>S</td><td>9.99</td><td>Spielzeugladen</td><td>12-05-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>007-2025</td><td>Fahrradhelm 2</td><td><input type="number" class="table-input" value="1"></td><td>L</td><td>35.50</td><td>Supermarkt</td><td>20-05-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>008-2025</td><td>Sandkastenform 6</td><td><input type="number" class="table-input" value="3"></td><td>M</td><td>7.50</td><td>Marktstand</td><td>28-05-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>009-2025</td><td>Knete-Set 4</td><td><input type="number" class="table-input" value="2"></td><td>S</td><td>12.99</td><td>Online-Shop</td><td>03-06-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>010-2025</td><td>Malkasten 9</td><td><input type="number" class="table-input" value="1"></td><td>XL</td><td>14.99</td><td>Spielzeugladen</td><td>10-06-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>011-2025</td><td>Ritterburg 11</td><td><input type="number" class="table-input" value="2"></td><td>M</td><td>29.99</td><td>Supermarkt</td><td>15-06-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>012-2025</td><td>Dinosaurierfiguren 8</td><td><input type="number" class="table-input" value="3"></td><td>S</td><td>19.50</td><td>Online-Shop</td><td>21-06-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>013-2025</td><td>Taschenlampe 2</td><td><input type="number" class="table-input" value="1"></td><td>L</td><td>11.99</td><td>Marktstand</td><td>27-06-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>014-2025</td><td>Fernglas 5</td><td><input type="number" class="table-input" value="2"></td><td>M</td><td>22.50</td><td>Spielzeugladen</td><td>02-07-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>015-2025</td><td>Kinderbuch 7</td><td><input type="number" class="table-input" value="3"></td><td>S</td><td>9.50</td><td>Online-Shop</td><td>07-07-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>016-2025</td><td>Spielzeugauto 3</td><td><input type="number" class="table-input" value="2"></td><td>M</td><td>18.99</td><td>Supermarkt</td><td>12-07-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>017-2025</td><td>Roboterset 9</td><td><input type="number" class="table-input" value="1"></td><td>L</td><td>49.99</td><td>Marktstand</td><td>17-07-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>018-2025</td><td>Lego-Set 12</td><td><input type="number" class="table-input" value="2"></td><td>M</td><td>39.99</td><td>Online-Shop</td><td>22-07-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>019-2025</td><td>Musikinstrument 6</td><td><input type="number" class="table-input" value="3"></td><td>S</td><td>29.50</td><td>Spielzeugladen</td><td>27-07-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>020-2025</td><td>Puppenhaus 4</td><td><input type="number" class="table-input" value="1"></td><td>L</td><td>59.99</td><td>Supermarkt</td><td>01-08-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>021-2025</td><td>Plüschtier 10</td><td><input type="number" class="table-input" value="2"></td><td>M</td><td>21.50</td><td>Online-Shop</td><td>05-08-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>022-2025</td><td>Puzzle 11</td><td><input type="number" class="table-input" value="1"></td><td>S</td><td>13.99</td><td>Marktstand</td><td>10-08-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>023-2025</td><td>Bausteine 7</td><td><input type="number" class="table-input" value="3"></td><td>XL</td><td>27.50</td><td>Supermarkt</td><td>15-08-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>024-2025</td><td>Actionfigur 14</td><td><input type="number" class="table-input" value="2"></td><td>M</td><td>31.99</td><td>Online-Shop</td><td>20-08-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>025-2025</td><td>Brettspiel 13</td><td><input type="number" class="table-input" value="4"></td><td>S</td><td>17.00</td><td>Spielzeugladen</td><td>25-08-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>026-2025</td><td>Lernspiel 8</td><td><input type="number" class="table-input" value="1"></td><td>L</td><td>10.50</td><td>Marktstand</td><td>30-08-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>027-2025</td><td>Fahrradhelm 5</td><td><input type="number" class="table-input" value="1"></td><td>M</td><td>37.99</td><td>Supermarkt</td><td>04-09-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>028-2025</td><td>Sandkastenform 9</td><td><input type="number" class="table-input" value="3"></td><td>S</td><td>8.50</td><td>Online-Shop</td><td>09-09-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>029-2025</td><td>Knete-Set 11</td><td><input type="number" class="table-input" value="2"></td><td>M</td><td>13.99</td><td>Spielzeugladen</td><td>14-09-2025</td><td>✏️📝📷★❌</td></tr>
-<tr><td>030-2025</td><td>Malkasten 10</td><td><input type="number" class="table-input" value="1"></td><td>L</td><td>15.50</td><td>Marktstand</td><td>19-09-2025</td><td>✏️📝📷★❌</td></tr>
-</tbody>
+<tbody id="tableBody"></tbody>
 </table>
 </div>
+
 <!-- Pop-up für Artikel anlegen -->
 <div id="popup">
-  <div class="popup-row"><label>Artikelnummer</label><input id="p_artnr"></div>
-  <div class="popup-row"><label>Name</label><input id="p_name"></div>
-  <div class="popup-row"><label>Menge</label><input type="number" id="p_menge" min="1" value="1"></div>
-  <div class="popup-row"><label>Größe</label><input id="p_groesse"></div>
-  <div class="popup-row"><label>Preis</label><input type="number" id="p_preis" step="0.01"></div>
-  <div class="popup-row"><label>Wo gekauft</label><input id="p_ort"></div>
-  <div class="popup-row"><label>Wann gekauft</label><input type="date" id="p_datum"></div>
-  <div class="popup-row"><label>Bild / Rechnung</label><input type="file" id="p_bild" accept="image/*"></div>
-  <div class="popup-row"><label>Notiz</label><textarea id="p_notiz" rows="2"></textarea></div>
-  <div style="display:flex; gap:10px; justify-content:center;">
-    <button onclick="saveArtikel()">Speichern</button>
-    <button onclick="closePopup()">Abbrechen</button>
-  </div>
+<div class="popup-row"><label>Artikelnummer</label><input id="p_artnr"></div>
+<div class="popup-row"><label>Name</label><input id="p_name"></div>
+<div class="popup-row"><label>Menge</label><input type="number" id="p_menge" value="1"></div>
+<div class="popup-row"><label>Größe</label><input id="p_groesse"></div>
+<div class="popup-row"><label>Preis</label><input id="p_preis"></div>
+<div class="popup-row"><label>Ort</label><input id="p_ort"></div>
+<div class="popup-row"><label>Datum</label><input type="date" id="p_datum"></div>
+<div class="popup-row"><label>Notiz</label><textarea id="p_notiz"></textarea></div>
+<div class="popup-row"><label>Bild</label><input type="file" id="p_bild" accept="image/*"></div>
+<div style="display:flex; gap:8px; margin-top:6px;">
+<button onclick="saveArtikel()">Speichern</button>
+<button onclick="closePopup()">Abbrechen</button>
 </div>
-
+</div>
 <script>
 // globale Variablen
 let editIndex = null;
 let artikelData = [];
 
-// Testartikel laden (bereits im HTML eingefügt)
-function loadInitialData() {
-  const rows = document.querySelectorAll("#tableBody tr");
-  rows.forEach(row => {
+// Testartikel generieren
+function generateTestArtikel(){
+  const namen = ["Buntstifte","Knete","Puzzle","Legosteine","Bausteine","Plüschtier","Ball","Rucksack","Malkasten","Spielkarte","Puppenhaus","Autoset","Traktor","Brettspiel","Murmelset","Bällebad","Brettspiel","Sandkasten","Springseil","Kreide","Magnetspiel","Lernspiel","Memory","Baumhaus","Schach","Würfelspiel","Puzzleball","Holzspielzeug","Münzspiel","Bauklötze"];
+  for(let i=0;i<30;i++){
+    let name = namen[i%namen.length] + " " + (i+1);
     artikelData.push({
-      artnr: row.cells[0].innerText,
-      name: row.cells[1].innerText,
-      menge: parseInt(row.cells[2].querySelector('input').value),
-      groesse: row.cells[3].innerText,
-      preis: parseFloat(row.cells[4].innerText),
-      ort: row.cells[5].innerText,
-      datum: row.cells[6].innerText,
-      notiz: "",
-      bild: null
+      artnr: String(i+1).padStart(3,'0')+"-"+new Date().getFullYear(),
+      name:name,
+      menge: Math.floor(Math.random()*5)+1,
+      groesse: (Math.floor(Math.random()*20)+1)+" cm",
+      preis: (Math.random()*50+1).toFixed(2),
+      ort: ["Berlin","Hamburg","München","Köln","Frankfurt"][i%5],
+      datum: ("0"+(Math.floor(Math.random()*28)+1)).slice(-2)+"-"+("0"+(Math.floor(Math.random()*12)+1)).slice(-2)+"-"+2025,
+      notiz:"Testnotiz "+(i+1),
+      bild:null
     });
-  });
-  updateCounters();
+  }
 }
 
 // Pop-up öffnen
@@ -160,10 +145,7 @@ function openPopup(index=null){
 }
 
 // Pop-up schließen
-function closePopup(){
-  document.getElementById('popup').style.display='none';
-  editIndex = null;
-}
+function closePopup(){ document.getElementById('popup').style.display='none'; editIndex=null; }
 
 // Artikel speichern
 function saveArtikel(){
@@ -178,12 +160,7 @@ function saveArtikel(){
     notiz: document.getElementById('p_notiz').value,
     bild: document.getElementById('p_bild').files[0] || null
   };
-
-  if(editIndex !== null){
-    artikelData[editIndex] = art;
-  } else {
-    artikelData.push(art);
-  }
+  if(editIndex !== null){ artikelData[editIndex]=art; } else { artikelData.push(art); }
   renderTable();
   closePopup();
   updateCounters();
@@ -195,78 +172,71 @@ function renderTable(){
   tbody.innerHTML='';
   artikelData.forEach((a,i)=>{
     let tr = document.createElement('tr');
-    tr.innerHTML = `<td>${a.artnr}</td><td>${a.name}</td><td><input type="number" class="table-input" value="${a.menge}" onchange="updateMenge(${i},this.value)"></td><td>${a.groesse}</td><td>${a.preis}</td><td>${a.ort}</td><td>${a.datum}</td>
-      <td>
+    tr.innerHTML = `<td>${a.artnr}</td>
+    <td>${a.name}</td>
+    <td><input type="number" class="table-input" value="${a.menge}" onchange="updateMenge(${i},this.value)"></td>
+    <td>${a.groesse}</td>
+    <td>${a.preis}</td>
+    <td>${a.ort}</td>
+    <td>${a.datum}</td>
+    <td>
       <span class="icon-btn" onclick="openPopup(${i})">✏️</span>
       <span class="icon-btn" onclick="viewNotiz(${i})">📝</span>
       <span class="icon-btn" onclick="viewBild(${i})">📷</span>
       <span class="icon-btn" onclick="toggleMark(${i})">★</span>
       <span class="icon-btn" onclick="deleteArtikel(${i})">❌</span>
-      </td>`;
+    </td>`;
     tbody.appendChild(tr);
   });
 }
 
-// Artikel Menge direkt in Tabelle ändern
-function updateMenge(index,value){
-  artikelData[index].menge=parseInt(value);
-  updateCounters();
-}
+// Menge in Tabelle direkt ändern
+function updateMenge(index,value){ artikelData[index].menge=parseInt(value); updateCounters(); }
 
 // Notiz anzeigen
-function viewNotiz(index){
-  alert(artikelData[index].notiz || "Keine Notiz hinterlegt");
-}
+function viewNotiz(index){ alert(artikelData[index].notiz || "Keine Notiz"); }
 
 // Bild anzeigen
 function viewBild(index){
-  if(artikelData[index].bild){
-    let url = URL.createObjectURL(artikelData[index].bild);
-    window.open(url);
-  } else {
-    alert("Kein Bild hinterlegt");
-  }
+  if(artikelData[index].bild){ window.open(URL.createObjectURL(artikelData[index].bild)); } 
+  else{ alert("Kein Bild hinterlegt"); }
 }
 
 // Zeile markieren / Stern
 function toggleMark(index){
   let tbody = document.getElementById('tableBody');
   let tr = tbody.children[index];
-  if(tr.style.background=='darkblue'){
-    tr.style.background='';
-  } else {
-    tr.style.background='darkblue';
-  }
+  if(tr.style.background=='darkblue'){ tr.style.background=''; } 
+  else{ tr.style.background='darkblue'; }
 }
 
 // Artikel löschen
 function deleteArtikel(index){
-  if(confirm("Artikel wirklich löschen?")){
-    artikelData.splice(index,1);
-    renderTable();
-    updateCounters();
-  }
+  if(confirm("Artikel wirklich löschen?")){ artikelData.splice(index,1); renderTable(); updateCounters(); }
 }
 
 // Suchfunktion
 function searchTable(){
   let val = document.getElementById('search').value.toLowerCase();
+  let column = document.getElementById('searchColumn').value;
   let tbody = document.getElementById('tableBody');
   Array.from(tbody.children).forEach((tr,i)=>{
-    if(artikelData[i].name.toLowerCase().includes(val) || artikelData[i].artnr.toLowerCase().includes(val)){
-      tr.style.display='';
-    } else {
-      tr.style.display='none';
+    let cellValue='';
+    switch(column){
+      case 'artnr': cellValue=artikelData[i].artnr; break;
+      case 'name': cellValue=artikelData[i].name; break;
+      case 'menge': cellValue=artikelData[i].menge.toString(); break;
+      case 'groesse': cellValue=artikelData[i].groesse; break;
+      case 'preis': cellValue=artikelData[i].preis.toString(); break;
+      case 'ort': cellValue=artikelData[i].ort; break;
+      case 'datum': cellValue=artikelData[i].datum; break;
     }
+    tr.style.display = cellValue.toLowerCase().includes(val)?'':'none';
   });
 }
 
-// Artikelnummer automatisch generieren
-function generateArtNr(){
-  let year = new Date().getFullYear();
-  let num = String(artikelData.length+1).padStart(3,'0');
-  return `${num}-${year}`;
-}
+// Artikelnummer automatisch
+function generateArtNr(){ let year=new Date().getFullYear(); let num=String(artikelData.length+1).padStart(3,'0'); return `${num}-${year}`; }
 
 // Zähler aktualisieren
 function updateCounters(){
@@ -280,89 +250,49 @@ function updateCounters(){
   document.getElementById('countWertTotal').innerText=countWertTotal.toFixed(2);
 }
 
-// Datum konvertieren für Anzeige
-function formatDateDisplay(input){
-  if(!input) return '';
-  let d = new Date(input);
-  return ('0'+d.getDate()).slice(-2)+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+d.getFullYear();
-}
+// Datum konvertieren
+function formatDateDisplay(input){ if(!input) return ''; let d=new Date(input); return ('0'+d.getDate()).slice(-2)+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+d.getFullYear(); }
+function formatDateInput(display){ if(!display) return ''; let parts=display.split('-'); return `${parts[2]}-${parts[1]}-${parts[0]}`; }
 
-// Datum konvertieren für Input
-function formatDateInput(display){
-  if(!display) return '';
-  let parts = display.split('-');
-  return `${parts[2]}-${parts[1]}-${parts[0]}`;
-}
+// Export/Import
+function exportData(){ let blob = new Blob([JSON.stringify(artikelData)],{type:"application/json"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='lager_backup.json'; a.click(); }
+function importData(){ let input=document.createElement('input'); input.type='file'; input.accept='.json'; input.onchange=e=>{ let file=e.target.files[0]; let reader=new FileReader(); reader.onload=function(ev){ artikelData=JSON.parse(ev.target.result); renderTable(); updateCounters(); }; reader.readAsText(file); }; input.click(); }
 
-// Daten exportieren
-function exportData(){
-  let dataStr = JSON.stringify(artikelData);
-  let blob = new Blob([dataStr], {type:"application/json"});
-  let a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'lager_backup.json';
-  a.click();
-}
-
-// Daten importieren
-function importData(){
-  let input = document.createElement('input');
-  input.type='file';
-  input.accept='.json';
-  input.onchange=e=>{
-    let file = e.target.files[0];
-    let reader = new FileReader();
-    reader.onload=function(ev){
-      artikelData = JSON.parse(ev.target.result);
-      renderTable();
-      updateCounters();
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-}
-
-// PDF Inventur (nur ArtNr, Name, Menge, Notiz)
-function generatePDF(){
+// PDF Inventur (tabellarisch)
+function generatePDF(){ 
   let pdfContent='ArtNr\tName\tMenge\tNotiz\n';
-  artikelData.forEach(a=>{
-    pdfContent+=`${a.artnr}\t${a.name}\t${a.menge}\t${a.notiz}\n`;
-  });
-  let blob = new Blob([pdfContent], {type:'text/plain'});
-  let a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download='inventur.txt';
-  a.click();
+  artikelData.forEach(a=>{ pdfContent+=`${a.artnr}\t${a.name}\t${a.menge}\t${a.notiz}\n`; });
+  let blob=new Blob([pdfContent],{type:'text/plain'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='inventur.txt'; a.click();
 }
 
 // Scrollverhalten: nur vertikal oder horizontal
-let tableContainer = document.getElementById('tableContainer');
-let startX, startY;
-tableContainer.addEventListener('touchstart', function(e){
-    startX = e.touches[0].pageX;
-    startY = e.touches[0].pageY;
-},{passive:true});
-
-tableContainer.addEventListener('touchmove', function(e){
-    let deltaX = e.touches[0].pageX - startX;
-    let deltaY = e.touches[0].pageY - startY;
-
-    if(Math.abs(deltaX) > Math.abs(deltaY)){
-        tableContainer.scrollLeft -= deltaX;
-    } else {
-        tableContainer.scrollTop -= deltaY;
-    }
-
-    startX = e.touches[0].pageX;
-    startY = e.touches[0].pageY;
-
-    e.preventDefault();
+let tableContainer=document.getElementById('tableContainer');
+let startX,startY;
+tableContainer.addEventListener('touchstart',function(e){ startX=e.touches[0].pageX; startY=e.touches[0].pageY;},{passive:true});
+tableContainer.addEventListener('touchmove',function(e){
+  let deltaX=e.touches[0].pageX-startX; let deltaY=e.touches[0].pageY-startY;
+  if(Math.abs(deltaX)>Math.abs(deltaY)){ tableContainer.scrollLeft-=deltaX; } 
+  else{ tableContainer.scrollTop-=deltaY; }
+  startX=e.touches[0].pageX; startY=e.touches[0].pageY;
+  e.preventDefault();
 },{passive:false});
 
-window.onload = ()=>{
-  loadInitialData();
+// Events
+document.getElementById('search').addEventListener('input', searchTable);
+document.getElementById('search').addEventListener('focus', ()=>{ document.getElementById('searchFilterPopup').style.display='block'; });
+document.getElementById('search').addEventListener('blur', ()=>{ setTimeout(()=>{ document.getElementById('searchFilterPopup').style.display='none'; },200); });
+
+// Initialisierung
+window.onload=()=>{
+  generateTestArtikel();
   renderTable();
+  updateCounters();
 };
+
+// Service Worker Registrierung
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(()=>console.log('Service Worker registered'));
+}
 </script>
 </body>
 </html>

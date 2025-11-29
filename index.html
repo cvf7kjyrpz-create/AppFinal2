@@ -14,10 +14,13 @@ body {margin:0; background:#000; color:white; font-family:Arial, sans-serif; ove
 .counter-value {font-size:16px;font-weight:bold;}
 #searchRow {margin-top:10px; display:flex; justify-content:center; position:relative;}
 #search {width:80%; padding:10px; border-radius:8px; background:#111; border:1px solid #444; color:white; box-sizing:border-box;}
+#searchFilterPopup {position:absolute; top:40px; left:50%; transform:translateX(-50%); background:#111; border:1px solid #444; border-radius:8px; padding:8px; display:none; z-index:10001; text-align:center;}
+#searchFilterPopup label{color:white; font-size:12px; display:block; margin-bottom:4px;}
+#searchFilterPopup button{margin:4px; padding:6px 8px; border-radius:6px; background:#000; border:1px solid #444; color:white; font-size:12px; cursor:pointer;}
 #buttonRow {margin-top:10px; display:flex; gap:8px; touch-action:manipulation;}
 #buttonRow button {flex:1; padding:6px; font-size:10px; color:#bbb; border-radius:10px; background:#000; border:1px solid #444; font-weight:bold; box-shadow:0 4px 10px rgba(0,0,0,0.45);}
 #buttonRow button:active {background:#111;}
-#tableContainer {position:absolute; top:185px; left:0; right:0; bottom:0; overflow-x:auto; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+#tableContainer {position:absolute; top:185px; left:0; right:0; bottom:0; overflow:auto; -webkit-overflow-scrolling:touch;}
 #artikelTable {width:max-content; min-width:100%; border-collapse:collapse; font-size:12px; table-layout:auto;}
 th {background:#111; position:sticky; top:0; z-index:5; padding:5px; color:#bbb; font-weight:bold;}
 td {padding:5px; border-bottom:1px solid #222; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;}
@@ -28,9 +31,6 @@ td {padding:5px; border-bottom:1px solid #222; white-space:nowrap; text-overflow
 #popup button {padding:6px; border-radius:8px; background:#000; border:1px solid #444; color:white; font-weight:bold; font-size:12px; flex:1;}
 .icon-btn {cursor:pointer; margin-left:4px; font-size:14px;}
 input.table-input {width:50px; background:#111; color:white; border:1px solid #444; border-radius:4px; text-align:center;}
-#searchFilterPopup {position:absolute; top:40px; left:50%; transform:translateX(-50%); background:#111; border:1px solid #444; border-radius:8px; padding:5px; display:none; z-index:10001;}
-#searchFilterPopup label{color:white; font-size:12px;}
-#searchFilterPopup select {width:150px; margin-top:5px; padding:4px; border-radius:6px; background:#1a1a1a; color:white; border:1px solid #444;}
 </style>
 </head>
 <body>
@@ -46,15 +46,13 @@ input.table-input {width:50px; background:#111; color:white; border:1px solid #4
         <input type="text" id="search" placeholder="Suchen …">
         <div id="searchFilterPopup">
           <label>Spalte wählen:</label>
-          <select id="searchColumn">
-            <option value="name">Name</option>
-            <option value="artnr">Artikelnummer</option>
-            <option value="menge">Menge</option>
-            <option value="groesse">Größe</option>
-            <option value="preis">Preis</option>
-            <option value="ort">Ort</option>
-            <option value="datum">Datum</option>
-          </select>
+          <button onclick="setSearchColumn('artnr')">Artikelnummer</button>
+          <button onclick="setSearchColumn('name')">Name</button>
+          <button onclick="setSearchColumn('menge')">Menge</button>
+          <button onclick="setSearchColumn('groesse')">Größe</button>
+          <button onclick="setSearchColumn('preis')">Preis</button>
+          <button onclick="setSearchColumn('ort')">Ort</button>
+          <button onclick="setSearchColumn('datum')">Datum</button>
         </div>
     </div>
     <div id="buttonRow">
@@ -93,13 +91,14 @@ input.table-input {width:50px; background:#111; color:white; border:1px solid #4
 </div>
 </div>
 <script>
-// globale Variablen
+// Globale Variablen
 let editIndex = null;
 let artikelData = [];
+let searchColumn = 'name'; // default
 
 // Testartikel generieren
 function generateTestArtikel(){
-  const namen = ["Buntstifte","Knete","Puzzle","Legosteine","Bausteine","Plüschtier","Ball","Rucksack","Malkasten","Spielkarte","Puppenhaus","Autoset","Traktor","Brettspiel","Murmelset","Bällebad","Brettspiel","Sandkasten","Springseil","Kreide","Magnetspiel","Lernspiel","Memory","Baumhaus","Schach","Würfelspiel","Puzzleball","Holzspielzeug","Münzspiel","Bauklötze"];
+  const namen = ["Buntstifte","Knete","Puzzle","Legosteine","Bausteine","Plüschtier","Ball","Rucksack","Malkasten","Spielkarte","Puppenhaus","Autoset","Traktor","Brettspiel","Murmelset","Bällebad","Sandkasten","Springseil","Kreide","Magnetspiel","Lernspiel","Memory","Baumhaus","Schach","Würfelspiel","Puzzleball","Holzspielzeug","Münzspiel","Bauklötze"];
   for(let i=0;i<30;i++){
     let name = namen[i%namen.length] + " " + (i+1);
     artikelData.push({
@@ -218,11 +217,10 @@ function deleteArtikel(index){
 // Suchfunktion
 function searchTable(){
   let val = document.getElementById('search').value.toLowerCase();
-  let column = document.getElementById('searchColumn').value;
   let tbody = document.getElementById('tableBody');
   Array.from(tbody.children).forEach((tr,i)=>{
     let cellValue='';
-    switch(column){
+    switch(searchColumn){
       case 'artnr': cellValue=artikelData[i].artnr; break;
       case 'name': cellValue=artikelData[i].name; break;
       case 'menge': cellValue=artikelData[i].menge.toString(); break;
@@ -233,6 +231,13 @@ function searchTable(){
     }
     tr.style.display = cellValue.toLowerCase().includes(val)?'':'none';
   });
+}
+
+// Such-Spalte setzen
+function setSearchColumn(col){
+  searchColumn=col;
+  document.getElementById('searchFilterPopup').style.display='none';
+  document.getElementById('search').focus();
 }
 
 // Artikelnummer automatisch
@@ -265,17 +270,27 @@ function generatePDF(){
   let blob=new Blob([pdfContent],{type:'text/plain'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='inventur.txt'; a.click();
 }
 
-// Scrollverhalten: nur vertikal oder horizontal
+// Scrollverhalten: flüssiger
 let tableContainer=document.getElementById('tableContainer');
-let startX,startY;
-tableContainer.addEventListener('touchstart',function(e){ startX=e.touches[0].pageX; startY=e.touches[0].pageY;},{passive:true});
-tableContainer.addEventListener('touchmove',function(e){
-  let deltaX=e.touches[0].pageX-startX; let deltaY=e.touches[0].pageY-startY;
-  if(Math.abs(deltaX)>Math.abs(deltaY)){ tableContainer.scrollLeft-=deltaX; } 
-  else{ tableContainer.scrollTop-=deltaY; }
-  startX=e.touches[0].pageX; startY=e.touches[0].pageY;
-  e.preventDefault();
+let isDragging=false, startX=0, startY=0, scrollLeft=0, scrollTop=0;
+
+tableContainer.addEventListener('touchstart', e=>{
+  isDragging=true;
+  startX=e.touches[0].pageX;
+  startY=e.touches[0].pageY;
+  scrollLeft=tableContainer.scrollLeft;
+  scrollTop=tableContainer.scrollTop;
+},{passive:true});
+
+tableContainer.addEventListener('touchmove', e=>{
+  if(!isDragging) return;
+  let dx=e.touches[0].pageX - startX;
+  let dy=e.touches[0].pageY - startY;
+  if(Math.abs(dx)>Math.abs(dy)){ tableContainer.scrollLeft = scrollLeft - dx; } 
+  else{ tableContainer.scrollTop = scrollTop - dy; }
 },{passive:false});
+
+tableContainer.addEventListener('touchend',()=>{ isDragging=false; });
 
 // Events
 document.getElementById('search').addEventListener('input', searchTable);

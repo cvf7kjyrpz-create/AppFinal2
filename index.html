@@ -5,148 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Lager App</title>
 <style>
-body {
-    margin: 0;
-    background: #000;
-    color: white;
-    font-family: Arial, sans-serif;
-    overflow: hidden;
-}
-#topbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    padding: 15px;
-    background: #000;
-    z-index: 9999; 
-    border-bottom: 2px solid #333;
-}
-#counterWrapper {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-}
-.counter-box {
-    padding: 10px;
-    border: 1px solid #444;
-    border-radius: 10px;
-    background: #000;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.45);
-}
-.counter-title { font-size: 11px; color: #bbb; }
-.counter-value { font-size: 18px; font-weight: bold; }
-#searchRow {margin-top: 10px; display:flex; justify-content:center;}
-#search {
-    width: 95%;
-    padding: 10px;
-    border-radius: 8px;
-    background: #111;
-    border: 1px solid #444;
-    color: white;
-    box-sizing: border-box;
-}
-#buttonRow { margin-top: 10px; display: flex; gap: 8px; touch-action: manipulation; }
-#buttonRow button {
-    flex: 1;
-    padding: 10px;
-    font-size: 11px;       
-    color: #bbb;           
-    border-radius: 10px;
-    background: #000;
-    border: 1px solid #444;
-    font-weight: bold;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.45);
-    pointer-events: auto;  
-}
-#buttonRow button:active {background: #111;}
-#tableContainer {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    top: 185px;
-    overflow-y: auto;
-    overflow-x: auto;
-}
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    table-layout: auto; 
-}
-th {
-    background: #111;
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    padding: 5px;
-    color: #bbb;          
-    font-weight: bold;
-}
-td {
-    padding: 5px;
-    border-bottom: 1px solid #222;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-#popup {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #111;
-    padding: 10px;
-    border: 2px solid #444;
-    border-radius: 12px;
-    width: 80%;
-    max-width: 320px;
-    display: none;
-    z-index: 10000;
-}
-.popup-row {
-    margin-bottom: 6px;
-    display: flex;
-    flex-direction: column;
-}
-.popup-row label { font-size: 13px; margin-bottom: 2px; }
-.popup-row input, .popup-row textarea {
-    width: 95%;
-    margin: 0 auto;
-    padding: 6px;
-    border-radius: 6px;
-    border: 1px solid #444;
-    background: #1a1a1a;
-    color: white;
-    font-size: 13px;
-    box-sizing: border-box;
-}
-#popup button {
-    padding: 8px;
-    border-radius: 8px;
-    background: #000;
-    border: 1px solid #444;
-    color: white;
-    font-weight: bold;
-    font-size: 13px;
-}
-.icon-btn {
-    cursor: pointer;
-    margin-left: 4px;
-    font-size: 14px;
-}
-input.table-input {
-    width: 50px;
-    background: #111;
-    color: white;
-    border: 1px solid #444;
-    border-radius: 4px;
-    text-align: center;
-}
+body {margin:0; background:#000; color:white; font-family:Arial, sans-serif; overflow:hidden;}
+#topbar {position:fixed; top:0; left:0; right:0; padding:15px; background:#000; z-index:9999; border-bottom:2px solid #333;}
+#counterWrapper {display:grid; grid-template-columns:repeat(2,1fr); gap:8px;}
+.counter-box {padding:10px; border:1px solid #444; border-radius:10px; background:#000; box-shadow:0 4px 10px rgba(0,0,0,0.45);}
+.counter-title {font-size:11px;color:#bbb;}
+.counter-value {font-size:18px;font-weight:bold;}
+#searchRow {margin-top:10px; display:flex; justify-content:center;}
+#search {width:95%; padding:10px; border-radius:8px; background:#111; border:1px solid #444; color:white; box-sizing:border-box;}
+#buttonRow {margin-top:10px; display:flex; gap:8px; touch-action:manipulation;}
+#buttonRow button {flex:1; padding:10px; font-size:11px; color:#bbb; border-radius:10px; background:#000; border:1px solid #444; font-weight:bold; box-shadow:0 4px 10px rgba(0,0,0,0.45);}
+#buttonRow button:active {background:#111;}
+#tableContainer {position:absolute; left:0; right:0; bottom:0; top:185px; overflow:auto;}
+table {width:100%; border-collapse:collapse; font-size:12px; table-layout:auto;}
+th {background:#111; position:sticky; top:0; z-index:5; padding:5px; color:#bbb; font-weight:bold;}
+td {padding:5px; border-bottom:1px solid #222; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;}
+#popup {position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#111; padding:10px; border:2px solid #444; border-radius:12px; width:80%; max-width:320px; display:none; z-index:10000;}
+.popup-row {margin-bottom:6px; display:flex; flex-direction:column;}
+.popup-row label {font-size:13px; margin-bottom:2px;}
+.popup-row input, .popup-row textarea {width:95%; margin:0 auto; padding:6px; border-radius:6px; border:1px solid #444; background:#1a1a1a; color:white; font-size:13px; box-sizing:border-box;}
+#popup button {padding:8px; border-radius:8px; background:#000; border:1px solid #444; color:white; font-weight:bold; font-size:13px;}
+.icon-btn {cursor:pointer; margin-left:4px; font-size:14px;}
+input.table-input {width:50px; background:#111; color:white; border:1px solid #444; border-radius:4px; text-align:center;}
 </style>
 </head>
 <body>
+
 <div id="topbar">
     <div id="counterWrapper">
         <div class="counter-box"><div class="counter-title">Artikel im Bestand</div><div class="counter-value" id="countArtikel">0</div></div>
@@ -164,6 +48,7 @@ input.table-input {
         <button onclick="generatePDF()">Inventur PDF</button>
     </div>
 </div>
+
 <div id="tableContainer">
 <table id="artikelTable">
 <thead>
@@ -185,7 +70,7 @@ input.table-input {
 <div class="popup-row"><label>Wann gekauft</label><input type="date" id="p_datum" style="width:95%; text-align:center;"></div>
 <div class="popup-row"><label>Bild / Rechnung</label><input type="file" id="p_bild" accept="image/*"></div>
 <div class="popup-row"><label>Notiz</label><textarea id="p_notiz" rows="2"></textarea></div>
-<div style="display: flex; gap: 10px;">
+<div style="display:flex; gap:10px;">
 <button onclick="saveArtikel()" style="flex:1;">Speichern</button>
 <button onclick="document.getElementById('popup').style.display='none'" style="flex:1;">Abbrechen</button>
 </div>
@@ -196,22 +81,36 @@ input.table-input {
 let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let editIndex = null;
 
-// 10 Testartikel hinzufügen, falls Lager leer
-if(artikel.length===0){
-    for(let i=1;i<=10;i++){
+// 200 Testartikel erzeugen
+if(artikel.length === 0){
+    const names = ["Plüschtier","Puzzle","Bausteine","Actionfigur","Brettspiel","Lernspiel","Fahrradhelm","Sandkastenform","Knete-Set","Malkasten","Ritterburg","Dinosaurierfiguren","Taschenlampe","Fernglas","Kinderbuch","Spielzeugauto","Roboterset","Lego-Set","Musikinstrument","Puppenhaus"];
+    const groessen = ["S","M","L","XL"];
+    const orte = ["Spielzeugladen","Online-Shop","Supermarkt","Marktstand"];
+    const heute = new Date();
+    for(let i=1;i<=200;i++){
+        const artnr = String(i).padStart(3,'0') + "-" + heute.getFullYear();
+        const name = names[Math.floor(Math.random()*names.length)] + " " + (Math.floor(Math.random()*100)+1);
+        const menge = Math.floor(Math.random()*5)+1;
+        const groesse = groessen[Math.floor(Math.random()*groessen.length)];
+        const preis = (Math.random()*45 +5).toFixed(2);
+        const ort = orte[Math.floor(Math.random()*orte.length)];
+        const datum = new Date(heute.getFullYear(), Math.floor(Math.random()*12), Math.floor(Math.random()*28)+1);
+        const tag = ("0"+datum.getDate()).slice(-2);
+        const monat = ("0"+(datum.getMonth()+1)).slice(-2);
+        const jahr = datum.getFullYear();
         artikel.push({
-            artnr: `00${i}-2025`,
-            name: `Testartikel ${i}`,
-            menge: i,
-            groesse: ["S","M","L","XL"][i%4],
-            preis: (i*5.5),
-            ort: `Shop ${i}`,
-            datum: `2025-11-${("0"+i).slice(-2)}`,
-            bild: "",
-            notiz: `Notiz ${i}`
+            artnr,
+            name,
+            menge,
+            groesse,
+            preis:Number(preis),
+            ort,
+            datum:`${jahr}-${monat}-${tag}`,
+            bild:"",
+            notiz:"Testnotiz"
         });
     }
-    localStorage.setItem("lagerData",JSON.stringify(artikel));
+    localStorage.setItem("lagerData", JSON.stringify(artikel));
 }
 
 updateCounters(); renderTable();
@@ -228,8 +127,8 @@ function getNextArtNr() {
 }
 
 function openPopup(){
-    document.getElementById("popup").style.display = "block";
-    if(editIndex === null){ 
+    document.getElementById("popup").style.display="block";
+    if(editIndex === null){
         document.getElementById("p_artnr").value = getNextArtNr();
         document.getElementById("p_name").value = "";
         document.getElementById("p_menge").value = 1;
@@ -304,11 +203,8 @@ function updateCounters(){
     document.getElementById("countWertTotal").innerText=wert.toFixed(2);
 }
 
-function updateMenge(i,v){
-    artikel[i].menge=Number(v); localStorage.setItem("lagerData",JSON.stringify(artikel)); updateCounters();
-}
+function updateMenge(i,v){ artikel[i].menge=Number(v); localStorage.setItem("lagerData",JSON.stringify(artikel)); updateCounters(); }
 
-// Neue Suchfunktion
 function searchTable() {
     const q = document.getElementById("search").value.toLowerCase();
     const tbody = document.getElementById("tableBody");
@@ -338,7 +234,6 @@ function searchTable() {
     });
 }
 
-// Export, Import, PDF und Icons Funktionen
 function exportData(){
     const blob=new Blob([JSON.stringify(artikel)],{type:"application/json"});
     const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="lager_sicherung.json"; a.click();
@@ -355,33 +250,29 @@ function generatePDF(){
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const colWidths = [40, 70, 20, 50]; 
-    let startX = 10;
-    let startY = 20;
-    let rowHeight = 8;
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("Inventur", 105, 10, {align:"center"});
-    const headers = ["ArtNr", "Name", "Menge", "Notiz"];
+    let startX = 10; let startY = 20; let rowHeight = 8;
+    doc.setFontSize(12); doc.setFont("helvetica","bold");
+    doc.text("Inventur",105,10,{align:"center"});
+    const headers = ["ArtNr","Name","Menge","Notiz"];
     let x = startX;
     headers.forEach((h,i)=>{
-        doc.rect(x, startY, colWidths[i], rowHeight);
-        doc.text(h, x + 2, startY + 6);
-        x += colWidths[i];
+        doc.rect(x,startY,colWidths[i],rowHeight);
+        doc.text(h,x+2,startY+6);
+        x+=colWidths[i];
     });
-    let y = startY + rowHeight;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    artikel.forEach((a, i) => {
-        x = startX;
-        if(y + rowHeight > 290){ doc.addPage(); y = startY + rowHeight; }
-        const values = [a.artnr, a.name, a.menge.toString(), a.notiz || "-"];
+    let y=startY+rowHeight;
+    doc.setFont("helvetica","normal"); doc.setFontSize(10);
+    artikel.forEach((a,i)=>{
+        x=startX;
+        if(y+rowHeight>290){ doc.addPage(); y=startY+rowHeight; }
+        const values=[a.artnr,a.name,a.menge.toString(),a.notiz||"-"];
         values.forEach((v,j)=>{
-            doc.rect(x, y, colWidths[j], rowHeight);
-            let txt = v.length > 25 ? v.substr(0, 25) + "…" : v;
-            doc.text(txt, x + 2, y + 6);
-            x += colWidths[j];
+            doc.rect(x,y,colWidths[j],rowHeight);
+            let txt=v.length>25?v.substr(0,25)+"…":v;
+            doc.text(txt,x+2,y+6);
+            x+=colWidths[j];
         });
-        y += rowHeight;
+        y+=rowHeight;
     });
     doc.save("inventur.pdf");
 }
@@ -389,13 +280,9 @@ function generatePDF(){
 function showNote(i){ alert(artikel[i].notiz || "Keine Notiz hinterlegt"); }
 function showImage(i){
     if(artikel[i].bild){
-        const w=window.open("");
-        const img=w.document.createElement("img");
-        img.src=artikel[i].bild;
-        img.style.maxWidth="100%";
-        img.style.height="auto";
-        w.document.body.style.background="#000";
-        w.document.body.appendChild(img);
+        const w=window.open(""); const img=w.document.createElement("img");
+        img.src=artikel[i].bild; img.style.maxWidth="100%"; img.style.height="auto";
+        w.document.body.style.background="#000"; w.document.body.appendChild(img);
     } else alert("Kein Bild vorhanden");
 }
-function deleteItem(i){ if(confirm("Willst du
+function deleteItem(i){ if(confirm("Willst du diesen Artikel

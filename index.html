@@ -2,312 +2,258 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Lager App</title>
+<link rel="stylesheet" href="style.css">
 <link rel="manifest" href="manifest.json">
-<style>
-body {margin:0; background:#000; color:white; font-family:Arial, sans-serif; overflow:hidden;}
-#topbar {position:fixed; top:0; left:0; right:0; padding:15px; background:#000; z-index:9999; border-bottom:2px solid #333;}
-#counterWrapper {display:grid; grid-template-columns:repeat(2,1fr); gap:8px;}
-.counter-box {padding:10px; border:1px solid #444; border-radius:10px; background:#000; box-shadow:0 4px 10px rgba(0,0,0,0.45);}
-.counter-title {font-size:11px;color:#bbb;}
-.counter-value {font-size:16px;font-weight:bold;}
-#searchRow {margin-top:10px; display:flex; justify-content:center; position:relative;}
-#search {width:80%; padding:10px; border-radius:8px; background:#111; border:1px solid #444; color:white; box-sizing:border-box;}
-#searchFilterPopup {position:absolute; top:40px; left:50%; transform:translateX(-50%); background:#111; border:1px solid #444; border-radius:8px; padding:8px; display:none; z-index:10001; text-align:center;}
-#searchFilterPopup label{color:white; font-size:12px; display:block; margin-bottom:4px;}
-#searchFilterPopup button{margin:4px; padding:6px 8px; border-radius:6px; background:#000; border:1px solid #444; color:white; font-size:12px; cursor:pointer;}
-#buttonRow {margin-top:10px; display:flex; gap:8px; touch-action:manipulation;}
-#buttonRow button {flex:1; padding:6px; font-size:10px; color:#bbb; border-radius:10px; background:#000; border:1px solid #444; font-weight:bold; box-shadow:0 4px 10px rgba(0,0,0,0.45);}
-#buttonRow button:active {background:#111;}
-#tableContainer {position:absolute; top:185px; left:0; right:0; bottom:0; overflow:auto; -webkit-overflow-scrolling:touch;}
-#artikelTable {width:max-content; min-width:100%; border-collapse:collapse; font-size:12px; table-layout:auto;}
-th {background:#111; position:sticky; top:0; z-index:5; padding:5px; color:#bbb; font-weight:bold;}
-td {padding:5px; border-bottom:1px solid #222; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;}
-#popup {position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#111; padding:10px; border:2px solid #444; border-radius:12px; width:90%; max-width:320px; max-height:90%; overflow-y:auto; display:none; z-index:10000; box-sizing:border-box;}
-.popup-row {margin-bottom:6px; display:flex; flex-direction:column; align-items:center;}
-.popup-row label {font-size:13px; margin-bottom:2px;}
-.popup-row input, .popup-row textarea {width:90%; padding:6px; border-radius:6px; border:1px solid #444; background:#1a1a1a; color:white; font-size:13px; box-sizing:border-box;}
-#popup button {padding:6px; border-radius:8px; background:#000; border:1px solid #444; color:white; font-weight:bold; font-size:12px; flex:1;}
-.icon-btn {cursor:pointer; margin-left:4px; font-size:14px;}
-input.table-input {width:50px; background:#111; color:white; border:1px solid #444; border-radius:4px; text-align:center;}
-</style>
 </head>
+
 <body>
 
-<div id="topbar">
-    <div id="counterWrapper">
-        <div class="counter-box"><div class="counter-title">Artikel im Bestand</div><div class="counter-value" id="countArtikel">0</div></div>
-        <div class="counter-box"><div class="counter-title">Gegenstände insgesamt</div><div class="counter-value" id="countMenge">0</div></div>
-        <div class="counter-box"><div class="counter-title">Warenwert aktuell (€)</div><div class="counter-value" id="countWert">0</div></div>
-        <div class="counter-box"><div class="counter-title">Warenwert gesamt (€)</div><div class="counter-value" id="countWertTotal">0</div></div>
-    </div>
-    <div id="searchRow">
-        <input type="text" id="search" placeholder="Suchen …">
-        <div id="searchFilterPopup">
-          <label>Spalte wählen:</label>
-          <button onclick="setSearchColumn('artnr')">Artikelnummer</button>
-          <button onclick="setSearchColumn('name')">Name</button>
-          <button onclick="setSearchColumn('menge')">Menge</button>
-          <button onclick="setSearchColumn('groesse')">Größe</button>
-          <button onclick="setSearchColumn('preis')">Preis</button>
-          <button onclick="setSearchColumn('ort')">Ort</button>
-          <button onclick="setSearchColumn('datum')">Datum</button>
+<div id="appContainer">
+
+    <!-- ▌ OBERER TEIL (NICHT MEHR ÄNDERN!)  -->
+    <div id="topArea">
+        <div class="counterRow">
+            <div class="counterBox"><span class="label">Artikel:</span><span id="countItems">0</span></div>
+            <div class="counterBox"><span class="label">Menge:</span><span id="countQty">0</span></div>
+        </div>
+        <div class="counterRow">
+            <div class="counterBox"><span class="label">Wert Jetzt:</span><span id="valueNow">0 €</span></div>
+            <div class="counterBox"><span class="label">Wert Gesamt:</span><span id="valueTotal">0 €</span></div>
+        </div>
+
+        <div id="buttonRow">
+            <button class="mainBtn" onclick="openAddPopup()">Artikel anlegen</button>
+            <button class="mainBtn" onclick="openSearchPopup()">Suchen</button>
+            <button class="mainBtn" onclick="exportBackup()">Backup speichern</button>
+            <button class="mainBtn" onclick="importBackup()">Backup laden</button>
+            <button class="mainBtn" onclick="generatePDF()">Inventur PDF</button>
         </div>
     </div>
-    <div id="buttonRow">
-        <button onclick="openPopup()">Artikel anlegen</button>
-        <button onclick="exportData()">Sicherung speichern</button>
-        <button onclick="importData()">Sicherung laden</button>
-        <button onclick="generatePDF()">Inventur PDF</button>
+
+    <!-- ▌ TABELLENBEREICH -->
+    <div id="tableContainer">
+        <div id="tableWrapper">
+            <table id="articleTable">
+                <thead>
+                    <tr>
+                        <th>Nr</th>
+                        <th>Name</th>
+                        <th>Menge</th>
+                        <th>Preis</th>
+                        <th>Ort</th>
+                        <th>Datum</th>
+                        <th>Größe</th>
+                        <th>Bild</th>
+                        <th>Notiz</th>
+                        <th>Bearbeiten</th>
+                        <th>Mark.</th>
+                        <th>Löschen</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- ▌ POPUP: ARTIKEL ANLEGEN -->
+<div id="popupOverlay" class="hidden">
+    <div id="popup">
+        <h2>Artikel anlegen</h2>
+
+        <label>Artikelnummer</label>
+        <input id="addNr">
+
+        <label>Artikelname</label>
+        <input id="addName">
+
+        <label>Menge</label>
+        <input type="number" id="addQty">
+
+        <label>Preis (€)</label>
+        <input type="number" step="0.01" id="addPrice">
+
+        <label>Ort</label>
+        <input id="addWhere">
+
+        <label>Kaufdatum</label>
+        <input id="addDate" type="date">
+
+        <label>Größe</label>
+        <input id="addSize">
+
+        <label>Notiz</label>
+        <textarea id="addNote"></textarea>
+
+        <label>Bild / Rechnung</label>
+        <input type="file" id="addImage">
+
+        <div class="popupButtons">
+            <button onclick="saveArticle()" class="saveBtn">Speichern</button>
+            <button onclick="closePopup()" class="cancelBtn">Abbrechen</button>
+        </div>
     </div>
 </div>
 
-<div id="tableContainer">
-<table id="artikelTable">
-<thead>
-<tr>
-<th>ArtNr</th><th>Name</th><th>Menge</th><th>Größe</th><th>Preis</th><th>Ort</th><th>Gekauft</th><th>Aktionen</th>
-</tr>
-</thead>
-<tbody id="tableBody"></tbody>
-</table>
+<!-- ▌ POPUP: SUCHE -->
+<div id="searchOverlay" class="hidden">
+    <div id="searchPopup">
+        <h2>Suche in…</h2>
+
+        <button class="searchBtn" onclick="selectSearchColumn('nr')">Artikelnummer</button>
+        <button class="searchBtn" onclick="selectSearchColumn('name')">Name</button>
+        <button class="searchBtn" onclick="selectSearchColumn('date')">Datum</button>
+        <button class="searchBtn" onclick="selectSearchColumn('size')">Größe</button>
+        <button class="searchBtn" onclick="selectSearchColumn('where')">Ort</button>
+
+        <button class="cancelBtn" onclick="closeSearchPopup()">Abbrechen</button>
+    </div>
 </div>
 
-<!-- Pop-up für Artikel anlegen -->
-<div id="popup">
-<div class="popup-row"><label>Artikelnummer</label><input id="p_artnr"></div>
-<div class="popup-row"><label>Name</label><input id="p_name"></div>
-<div class="popup-row"><label>Menge</label><input type="number" id="p_menge" value="1"></div>
-<div class="popup-row"><label>Größe</label><input id="p_groesse"></div>
-<div class="popup-row"><label>Preis</label><input id="p_preis"></div>
-<div class="popup-row"><label>Ort</label><input id="p_ort"></div>
-<div class="popup-row"><label>Datum</label><input type="date" id="p_datum"></div>
-<div class="popup-row"><label>Notiz</label><textarea id="p_notiz"></textarea></div>
-<div class="popup-row"><label>Bild</label><input type="file" id="p_bild" accept="image/*"></div>
-<div style="display:flex; gap:8px; margin-top:6px;">
-<button onclick="saveArtikel()">Speichern</button>
-<button onclick="closePopup()">Abbrechen</button>
-</div>
-</div>
+<script src="app.js"></script>
 <script>
-// Globale Variablen
-let editIndex = null;
-let artikelData = [];
-let searchColumn = 'name'; // default
-
-// Testartikel generieren
-function generateTestArtikel(){
-  const namen = ["Buntstifte","Knete","Puzzle","Legosteine","Bausteine","Plüschtier","Ball","Rucksack","Malkasten","Spielkarte","Puppenhaus","Autoset","Traktor","Brettspiel","Murmelset","Bällebad","Sandkasten","Springseil","Kreide","Magnetspiel","Lernspiel","Memory","Baumhaus","Schach","Würfelspiel","Puzzleball","Holzspielzeug","Münzspiel","Bauklötze"];
-  for(let i=0;i<30;i++){
-    let name = namen[i%namen.length] + " " + (i+1);
-    artikelData.push({
-      artnr: String(i+1).padStart(3,'0')+"-"+new Date().getFullYear(),
-      name:name,
-      menge: Math.floor(Math.random()*5)+1,
-      groesse: (Math.floor(Math.random()*20)+1)+" cm",
-      preis: (Math.random()*50+1).toFixed(2),
-      ort: ["Berlin","Hamburg","München","Köln","Frankfurt"][i%5],
-      datum: ("0"+(Math.floor(Math.random()*28)+1)).slice(-2)+"-"+("0"+(Math.floor(Math.random()*12)+1)).slice(-2)+"-"+2025,
-      notiz:"Testnotiz "+(i+1),
-      bild:null
-    });
-  }
-}
-
-// Pop-up öffnen
-function openPopup(index=null){
-  document.getElementById('popup').style.display='block';
-  if(index !== null){
-    editIndex = index;
-    let a = artikelData[index];
-    document.getElementById('p_artnr').value = a.artnr;
-    document.getElementById('p_name').value = a.name;
-    document.getElementById('p_menge').value = a.menge;
-    document.getElementById('p_groesse').value = a.groesse;
-    document.getElementById('p_preis').value = a.preis;
-    document.getElementById('p_ort').value = a.ort;
-    document.getElementById('p_datum').value = formatDateInput(a.datum);
-    document.getElementById('p_notiz').value = a.notiz;
-  } else {
-    editIndex = null;
-    document.getElementById('p_artnr').value = generateArtNr();
-    document.getElementById('p_name').value='';
-    document.getElementById('p_menge').value=1;
-    document.getElementById('p_groesse').value='';
-    document.getElementById('p_preis').value='';
-    document.getElementById('p_ort').value='';
-    document.getElementById('p_datum').value='';
-    document.getElementById('p_notiz').value='';
-    document.getElementById('p_bild').value='';
-  }
-}
-
-// Pop-up schließen
-function closePopup(){ document.getElementById('popup').style.display='none'; editIndex=null; }
-
-// Artikel speichern
-function saveArtikel(){
-  let art = {
-    artnr: document.getElementById('p_artnr').value,
-    name: document.getElementById('p_name').value,
-    menge: parseInt(document.getElementById('p_menge').value),
-    groesse: document.getElementById('p_groesse').value,
-    preis: parseFloat(document.getElementById('p_preis').value),
-    ort: document.getElementById('p_ort').value,
-    datum: formatDateDisplay(document.getElementById('p_datum').value),
-    notiz: document.getElementById('p_notiz').value,
-    bild: document.getElementById('p_bild').files[0] || null
-  };
-  if(editIndex !== null){ artikelData[editIndex]=art; } else { artikelData.push(art); }
-  renderTable();
-  closePopup();
-  updateCounters();
-}
-
-// Tabelle rendern
-function renderTable(){
-  let tbody = document.getElementById('tableBody');
-  tbody.innerHTML='';
-  artikelData.forEach((a,i)=>{
-    let tr = document.createElement('tr');
-    tr.innerHTML = `<td>${a.artnr}</td>
-    <td>${a.name}</td>
-    <td><input type="number" class="table-input" value="${a.menge}" onchange="updateMenge(${i},this.value)"></td>
-    <td>${a.groesse}</td>
-    <td>${a.preis}</td>
-    <td>${a.ort}</td>
-    <td>${a.datum}</td>
-    <td>
-      <span class="icon-btn" onclick="openPopup(${i})">✏️</span>
-      <span class="icon-btn" onclick="viewNotiz(${i})">📝</span>
-      <span class="icon-btn" onclick="viewBild(${i})">📷</span>
-      <span class="icon-btn" onclick="toggleMark(${i})">★</span>
-      <span class="icon-btn" onclick="deleteArtikel(${i})">❌</span>
-    </td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-// Menge in Tabelle direkt ändern
-function updateMenge(index,value){ artikelData[index].menge=parseInt(value); updateCounters(); }
-
-// Notiz anzeigen
-function viewNotiz(index){ alert(artikelData[index].notiz || "Keine Notiz"); }
-
-// Bild anzeigen
-function viewBild(index){
-  if(artikelData[index].bild){ window.open(URL.createObjectURL(artikelData[index].bild)); } 
-  else{ alert("Kein Bild hinterlegt"); }
-}
-
-// Zeile markieren / Stern
-function toggleMark(index){
-  let tbody = document.getElementById('tableBody');
-  let tr = tbody.children[index];
-  if(tr.style.background=='darkblue'){ tr.style.background=''; } 
-  else{ tr.style.background='darkblue'; }
-}
-
-// Artikel löschen
-function deleteArtikel(index){
-  if(confirm("Artikel wirklich löschen?")){ artikelData.splice(index,1); renderTable(); updateCounters(); }
-}
-
-// Suchfunktion
-function searchTable(){
-  let val = document.getElementById('search').value.toLowerCase();
-  let tbody = document.getElementById('tableBody');
-  Array.from(tbody.children).forEach((tr,i)=>{
-    let cellValue='';
-    switch(searchColumn){
-      case 'artnr': cellValue=artikelData[i].artnr; break;
-      case 'name': cellValue=artikelData[i].name; break;
-      case 'menge': cellValue=artikelData[i].menge.toString(); break;
-      case 'groesse': cellValue=artikelData[i].groesse; break;
-      case 'preis': cellValue=artikelData[i].preis.toString(); break;
-      case 'ort': cellValue=artikelData[i].ort; break;
-      case 'datum': cellValue=artikelData[i].datum; break;
-    }
-    tr.style.display = cellValue.toLowerCase().includes(val)?'':'none';
-  });
-}
-
-// Such-Spalte setzen
-function setSearchColumn(col){
-  searchColumn=col;
-  document.getElementById('searchFilterPopup').style.display='none';
-  document.getElementById('search').focus();
-}
-
-// Artikelnummer automatisch
-function generateArtNr(){ let year=new Date().getFullYear(); let num=String(artikelData.length+1).padStart(3,'0'); return `${num}-${year}`; }
-
-// Zähler aktualisieren
-function updateCounters(){
-  let countArtikel = artikelData.length;
-  let countMenge = artikelData.reduce((sum,a)=>sum+a.menge,0);
-  let countWert = artikelData.reduce((sum,a)=>sum+a.preis*a.menge,0);
-  let countWertTotal = countWert;
-  document.getElementById('countArtikel').innerText=countArtikel;
-  document.getElementById('countMenge').innerText=countMenge;
-  document.getElementById('countWert').innerText=countWert.toFixed(2);
-  document.getElementById('countWertTotal').innerText=countWertTotal.toFixed(2);
-}
-
-// Datum konvertieren
-function formatDateDisplay(input){ if(!input) return ''; let d=new Date(input); return ('0'+d.getDate()).slice(-2)+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+d.getFullYear(); }
-function formatDateInput(display){ if(!display) return ''; let parts=display.split('-'); return `${parts[2]}-${parts[1]}-${parts[0]}`; }
-
-// Export/Import
-function exportData(){ let blob = new Blob([JSON.stringify(artikelData)],{type:"application/json"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='lager_backup.json'; a.click(); }
-function importData(){ let input=document.createElement('input'); input.type='file'; input.accept='.json'; input.onchange=e=>{ let file=e.target.files[0]; let reader=new FileReader(); reader.onload=function(ev){ artikelData=JSON.parse(ev.target.result); renderTable(); updateCounters(); }; reader.readAsText(file); }; input.click(); }
-
-// PDF Inventur (tabellarisch)
-function generatePDF(){ 
-  let pdfContent='ArtNr\tName\tMenge\tNotiz\n';
-  artikelData.forEach(a=>{ pdfContent+=`${a.artnr}\t${a.name}\t${a.menge}\t${a.notiz}\n`; });
-  let blob=new Blob([pdfContent],{type:'text/plain'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='inventur.txt'; a.click();
-}
-
-// Scrollverhalten: flüssiger
-let tableContainer=document.getElementById('tableContainer');
-let isDragging=false, startX=0, startY=0, scrollLeft=0, scrollTop=0;
-
-tableContainer.addEventListener('touchstart', e=>{
-  isDragging=true;
-  startX=e.touches[0].pageX;
-  startY=e.touches[0].pageY;
-  scrollLeft=tableContainer.scrollLeft;
-  scrollTop=tableContainer.scrollTop;
-},{passive:true});
-
-tableContainer.addEventListener('touchmove', e=>{
-  if(!isDragging) return;
-  let dx=e.touches[0].pageX - startX;
-  let dy=e.touches[0].pageY - startY;
-  if(Math.abs(dx)>Math.abs(dy)){ tableContainer.scrollLeft = scrollLeft - dx; } 
-  else{ tableContainer.scrollTop = scrollTop - dy; }
-},{passive:false});
-
-tableContainer.addEventListener('touchend',()=>{ isDragging=false; });
-
-// Events
-document.getElementById('search').addEventListener('input', searchTable);
-document.getElementById('search').addEventListener('focus', ()=>{ document.getElementById('searchFilterPopup').style.display='block'; });
-document.getElementById('search').addEventListener('blur', ()=>{ setTimeout(()=>{ document.getElementById('searchFilterPopup').style.display='none'; },200); });
-
-// Initialisierung
-window.onload=()=>{
-  generateTestArtikel();
-  renderTable();
-  updateCounters();
-};
-
-// Service Worker Registrierung
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').then(()=>console.log('Service Worker registered'));
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js");
 }
 </script>
+
 </body>
 </html>
+body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    color: #fff;
+    font-family: Arial;
+}
+
+#appContainer {
+    width: 100%;
+    overflow: hidden;
+}
+
+/* ▌ OBERER TEIL */
+#topArea {
+    width: 100%;
+    background: #000;
+    padding: 15px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.counterRow {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.counterBox {
+    flex: 1;
+    border: 1px solid #666;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.label {
+    color: #87CEFA;
+    margin-right: 5px;
+}
+
+#buttonRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.mainBtn {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid #666;
+    border-radius: 10px;
+    color: #fff;
+}
+
+/* ▌ TABELLE */
+#tableContainer {
+    position: fixed;
+    top: 240px; /* wird durch JS überschrieben */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    background: #000;
+}
+
+#tableWrapper {
+    width: max-content;
+    min-width: 100%;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    color: #fff;
+}
+
+th {
+    font-size: 13px;
+    border-bottom: 1px solid #444;
+    padding: 5px;
+}
+
+td {
+    font-size: 13px;
+    padding: 5px;
+    border-bottom: 1px solid #333;
+}
+
+/* ▌ POPUP */
+#popupOverlay, #searchOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hidden { display: none; }
+
+#popup, #searchPopup {
+    background: #111;
+    padding: 20px;
+    width: 85%;
+    max-width: 350px;
+    border-radius: 15px;
+    border: 1px solid #555;
+}
+
+#popup input, #popup textarea {
+    width: 100%;
+    border: 1px solid #666;
+    background: #000;
+    color: #fff;
+    margin-bottom: 10px;
+    padding: 5px;
+}
+
+.popupButtons {
+    display: flex;
+    gap: 10px;
+}
+
+.saveBtn, .cancelBtn, .searchBtn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid #666;
+    color: #fff;
+}

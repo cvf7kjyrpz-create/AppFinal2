@@ -69,7 +69,8 @@ body {
 
 #tableContainer {
     position: absolute;
-    left: 0; right: 0; bottom: 0;
+    left: 0;
+    right: 0;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -182,14 +183,6 @@ td {
 <script>
 let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 
-if (artikel.length === 0) {
-  artikel = [
-    {artnr:"1001",name:"Jacke",menge:2,groesse:"L",preis:59.99,ort:"Zara",datum:"2024-01-12",bild:"",notiz:"gefüttert",markiert:false},
-    {artnr:"1002",name:"Sneaker",menge:1,groesse:"43",preis:89.90,ort:"Snipes",datum:"2024-02-01",bild:"",notiz:"",markiert:false}
-  ];
-  localStorage.setItem("lagerData", JSON.stringify(artikel));
-}
-
 let editIndex = -1;
 
 function openPopup(){
@@ -295,8 +288,19 @@ function importData(){
 
 function generatePDF(){ alert("PDF kommt im nächsten Schritt."); }
 
-renderTable();
-updateCounters();
+/* ✅ WICHTIGER FIX: Tabelle korrekt unter Header positionieren */
+function adjustTableTop(){
+  const h = topbar.offsetHeight;
+  tableContainer.style.top = h + "px";
+  tableContainer.style.height = "calc(100vh - " + h + "px)";
+}
+
+window.onload=()=>{
+  adjustTableTop();
+  renderTable();
+  updateCounters();
+};
+window.onresize=adjustTableTop;
 </script>
 </body>
 </html>

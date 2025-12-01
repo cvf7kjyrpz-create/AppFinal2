@@ -74,7 +74,7 @@ body{
   right:0;
   bottom:0;
   overflow-y:auto;
-  overflow-x:auto;      /* ✅ Rechts/Links wieder möglich */
+  overflow-x:auto;      /* horizontal scrollen erlaubt */
   background:#000;
   z-index:100;
   -webkit-overflow-scrolling:touch;
@@ -299,20 +299,30 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 
   function openNew(){
     editIndex = -1;
-    p_artnr.value=""; p_name.value=""; p_menge.value=1;
-    p_groesse.value=""; p_preis.value="";
-    p_ort.value=""; p_datum.value="";
-    p_bild.value=""; p_notiz.value="";
+    p_artnr.value=""; p_name.value="";
+    p_menge.value=1; p_groesse.value="";
+    p_preis.value=""; p_ort.value="";
+    p_datum.value=""; p_bild.value="";
+    p_notiz.value="";
     popup.style.display="block";
+  }
+
+  function closePopup(){
+    popup.style.display="none";
+    editIndex=-1;
   }
 
   function save(){
     const artnr = p_artnr.value.trim();
     const name = p_name.value.trim();
-    if (!artnr || !name){alert("Artikelnummer + Name notwendig");return;}
+    if (!artnr || !name){
+      alert("Artikelnummer + Name notwendig");
+      return;
+    }
 
     const base = {
-      artnr,name,
+      artnr,
+      name,
       menge:+p_menge.value||0,
       groesse:p_groesse.value.trim(),
       preis:+p_preis.value||0,
@@ -321,27 +331,46 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
       notiz:p_notiz.value.trim()
     };
 
+    const file = p_bild.files[0];
+
     function finalize(b64){
-      const obj = {...base, bild:b64||"", markiert:false};
+      const mark = editIndex>-1 ? !!artikel[editIndex].markiert : false;
+      const oldBild = editIndex>-1 ? (artikel[editIndex].bild||"") : "";
+      const obj = {
+        ...base,
+        bild: b64 || oldBild,
+        markiert: mark
+      };
       if (editIndex>-1) artikel[editIndex]=obj;
       else artikel.push(obj);
       localStorage.setItem('lagerData',JSON.stringify(artikel));
-      renderTable(); updateCounters(); popup.style.display="none";
+      renderTable();
+      updateCounters();
+      closePopup();   // ✅ Pop-up schließt sich jetzt sicher nach Speichern
     }
 
-    if (p_bild.files[0]){
+    if (file){
       const r=new FileReader();
       r.onload=e=>finalize(e.target.result);
-      r.readAsDataURL(p_bild.files[0]);
-    } else finalize("");
+      r.onerror=()=>finalize("");
+      r.readAsDataURL(file);
+    } else {
+      finalize("");
+    }
   }
 
   function edit(i){
     editIndex=i;
     const a=artikel[i];
-    p_artnr.value=a.artnr; p_name.value=a.name; p_menge.value=a.menge;
-    p_groesse.value=a.groesse; p_preis.value=a.preis;
-    p_ort.value=a.ort; p_datum.value=a.datum; p_notiz.value=a.notiz;
+    p_artnr.value=a.artnr;
+    p_name.value=a.name;
+    p_menge.value=a.menge;
+    p_groesse.value=a.groesse;
+    p_preis.value=a.preis;
+    p_ort.value=a.ort;
+    p_datum.value=a.datum;
+    p_bild.value="";
+    p_notiz.value=a.notiz;
     popup.style.display="block";
   }
 
@@ -349,7 +378,8 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
     if(confirm("Wirklich löschen?")){
       artikel.splice(i,1);
       localStorage.setItem('lagerData',JSON.stringify(artikel));
-      renderTable(); updateCounters();
+      renderTable();
+      updateCounters();
     }
   }
 
@@ -362,16 +392,21 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   function viewImg(i){
     const a=artikel[i];
     viewPopup.innerHTML = a.bild
-      ? `<img class="preview" src="${a.bild}"><br><button onclick="viewPopup.style.display='none'">Schließen</button>`
-      : `<div>Kein Bild</div><br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
+      ? `<img class="preview" src="${a.bild}"><br><button onclick="__closeView()">Schließen</button>`
+      : `<div>Kein Bild</div><br><button onclick="__closeView()">Schließen</button>`;
     viewPopup.style.display="block";
   }
 
   function viewNote(i){
     viewPopup.innerHTML =
       `<div>${artikel[i].notiz||"Keine Notiz"}</div>
-       <br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
+       <br><button onclick="__closeView()">Schließen</button>`;
     viewPopup.style.display="block";
+  }
+
+  function closeView(){
+    viewPopup.style.display="none";
+    viewPopup.innerHTML="";
   }
 
   function search(){
@@ -384,31 +419,103 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   function exportData(){
     const blob=new Blob([JSON.stringify(artikel)],{type:"application/json"});
     const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob); a.download="lager.json"; a.click();
+    a.href=URL.createObjectURL(blob);
+    a.download="lager.json";
+    a.click();
   }
 
   function importData(){
-    const inp=document.createElement("input"); inp.type="file"; inp.accept="application/json";
+    const inp=document.createElement("input");
+    inp.type="file";
+    inp.accept="application/json";
     inp.onchange=e=>{
       const r=new FileReader();
-      r.onload=()=>{artikel=JSON.parse(r.result);localStorage.setItem("lagerData",JSON.stringify(artikel));renderTable();updateCounters();};
+      r.onload=()=>{
+        artikel=JSON.parse(r.result);
+        localStorage.setItem("lagerData",JSON.stringify(artikel));
+        renderTable();
+        updateCounters();
+      };
       r.readAsText(e.target.files[0]);
     };
     inp.click();
   }
 
-  function pdf(){ alert("PDF kommt im nächsten Schritt"); }
+  // Kleine Escape-Funktion für PDF/Print-HTML
+  function escapeHtml(text){
+    return (text||"")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
 
-  window.__toggle=toggle; window.__viewImg=viewImg; window.__viewNote=viewNote;
-  window.__edit=edit; window.__del=del;
+  function generatePDF(){
+    // Wir nutzen Browser-Druckdialog -> der Nutzer kann "Als PDF sichern" wählen
+    const win = window.open("", "_blank");
+    let html = `
+      <html><head><title>Inventur</title>
+      <style>
+        body{font-family:Arial,sans-serif;font-size:12px;}
+        h2{font-size:16px;margin-bottom:10px;}
+        table{border-collapse:collapse;width:100%;}
+        th,td{border:1px solid #000;padding:4px;font-size:11px;}
+        th{text-align:left;}
+      </style>
+      </head><body>
+      <h2>Inventur</h2>
+      <table>
+      <thead>
+        <tr>
+          <th>Artikelnummer</th>
+          <th>Name</th>
+          <th>Menge</th>
+          <th>Notiz</th>
+        </tr>
+      </thead>
+      <tbody>
+    `;
+    artikel.forEach(a=>{
+      html += `<tr>
+        <td>${escapeHtml(a.artnr)}</td>
+        <td>${escapeHtml(a.name)}</td>
+        <td>${a.menge}</td>
+        <td>${escapeHtml(a.notiz || "")}</td>
+      </tr>`;
+    });
+    html += `
+      </tbody>
+      </table>
+      </body></html>
+    `;
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    // Nutzer kann im Druckdialog "Als PDF" wählen
+    win.print();
+  }
 
-  btnAdd.onclick=openNew;
-  btnSave.onclick=save;
-  btnCancel.onclick=()=>popup.style.display="none";
-  btnExport.onclick=exportData;
-  btnImport.onclick=importData;
-  btnPDF.onclick=pdf;
-  searchInput.oninput=search;
+  // globale Brücken für Icons
+  window.__toggle = toggle;
+  window.__viewImg = viewImg;
+  window.__viewNote = viewNote;
+  window.__edit = edit;
+  window.__del = del;
+  window.__closeView = closeView;
+
+  // Events
+  btnAdd.onclick = openNew;
+  btnSave.onclick = save;
+  btnCancel.onclick = closePopup;
+  btnExport.onclick = exportData;
+  btnImport.onclick = importData;
+  btnPDF.onclick = generatePDF;
+  searchInput.oninput = search;
+
+  window.addEventListener("load",adjustTableTop);
+  window.addEventListener("resize",adjustTableTop);
 
   adjustTableTop();
   renderTable();

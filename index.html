@@ -14,7 +14,7 @@ body{
   overflow:hidden;
 }
 
-/* HEADER OBEN FIXIERT */
+/* HEADER */
 #topbar{
   position:fixed;
   top:0;
@@ -74,11 +74,12 @@ body{
   right:0;
   bottom:0;
   overflow-y:auto;
-  overflow-x:hidden;
+  overflow-x:auto;      /* ✅ Rechts/Links wieder möglich */
   background:#000;
   z-index:100;
   -webkit-overflow-scrolling:touch;
 }
+
 table{width:100%;border-collapse:collapse;}
 th{
   background:#111;
@@ -155,22 +156,10 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 
 <div id="topbar">
   <div id="counterWrapper">
-    <div class="counter-box">
-      <div class="counter-title">Artikel im Bestand</div>
-      <div class="counter-value" id="countArtikel">0</div>
-    </div>
-    <div class="counter-box">
-      <div class="counter-title">Gegenstände insgesamt</div>
-      <div class="counter-value" id="countMenge">0</div>
-    </div>
-    <div class="counter-box">
-      <div class="counter-title">Warenwert aktuell (€)</div>
-      <div class="counter-value" id="countWert">0</div>
-    </div>
-    <div class="counter-box">
-      <div class="counter-title">Warenwert gesamt (€)</div>
-      <div class="counter-value" id="countWertTotal">0</div>
-    </div>
+    <div class="counter-box"><div class="counter-title">Artikel im Bestand</div><div class="counter-value" id="countArtikel">0</div></div>
+    <div class="counter-box"><div class="counter-title">Gegenstände insgesamt</div><div class="counter-value" id="countMenge">0</div></div>
+    <div class="counter-box"><div class="counter-title">Warenwert aktuell (€)</div><div class="counter-value" id="countWert">0</div></div>
+    <div class="counter-box"><div class="counter-title">Warenwert gesamt (€)</div><div class="counter-value" id="countWertTotal">0</div></div>
   </div>
 
   <div id="searchRow">
@@ -222,12 +211,10 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   </div>
 </div>
 
-<!-- VIEW-POPUP (Bild / Notiz) -->
 <div id="viewPopup"></div>
 
 <script>
 (function(){
-  // DOM-Elemente
   const topbar = document.getElementById('topbar');
   const tableContainer = document.getElementById('tableContainer');
   const tableBody = document.getElementById('tableBody');
@@ -259,15 +246,7 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   const btnSave = document.getElementById('btnSave');
   const btnCancel = document.getElementById('btnCancel');
 
-  // Daten
-  let artikel;
-  try {
-    artikel = JSON.parse(localStorage.getItem('lagerData') || '[]') || [];
-  } catch(e){
-    artikel = [];
-  }
-
-  // Immer 5 Testartikel, wenn leer
+  let artikel = JSON.parse(localStorage.getItem('lagerData') || '[]');
   if (artikel.length === 0){
     artikel = [
       {artnr:"1001-2025", name:"Winterjacke", menge:2, groesse:"L", preis:59.99, ort:"Zara", datum:"2025-01-10", bild:"", notiz:"gefüttert", markiert:false},
@@ -282,246 +261,155 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   let editIndex = -1;
 
   function adjustTableTop(){
-    const h = topbar.offsetHeight;
-    tableContainer.style.top = h + 'px';
+    tableContainer.style.top = topbar.offsetHeight + "px";
   }
 
-  // Anzeige aktualisieren
   function renderTable(){
     tableBody.innerHTML = "";
     artikel.forEach((a, i)=>{
-      const tr = document.createElement('tr');
-      if (a.markiert) tr.classList.add('marked');
-      const preis = Number(a.preis || 0);
+      const tr = document.createElement("tr");
+      if (a.markiert) tr.classList.add("marked");
       tr.innerHTML = `
-        <td onclick="__toggleMark(${i})">${a.markiert ? "⭐" : "☆"}</td>
-        <td>${a.artnr || ""}</td>
-        <td>${a.name || ""}</td>
-        <td>${a.menge ?? ""}</td>
-        <td>${a.groesse || ""}</td>
-        <td>${preis.toFixed(2)}</td>
-        <td>${a.ort || ""}</td>
-        <td>${a.datum || ""}</td>
+        <td onclick="__toggle(${i})">${a.markiert ? "⭐" : "☆"}</td>
+        <td>${a.artnr}</td>
+        <td>${a.name}</td>
+        <td>${a.menge}</td>
+        <td>${a.groesse}</td>
+        <td>${a.preis.toFixed(2)}</td>
+        <td>${a.ort}</td>
+        <td>${a.datum}</td>
         <td class="iconCell">
           <span onclick="__viewImg(${i})">📷</span>
           <span onclick="__viewNote(${i})">📝</span>
           <span onclick="__edit(${i})">✏️</span>
           <span class="delete" onclick="__del(${i})">🗑</span>
-        </td>
-      `;
+        </td>`;
       tableBody.appendChild(tr);
     });
   }
 
   function updateCounters(){
+    let m=0,w=0;
+    artikel.forEach(a=>{m+=a.menge; w+=a.menge*a.preis;});
     countArtikel.textContent = artikel.length;
-    let menge = 0;
-    let wert = 0;
-    artikel.forEach(a=>{
-      const m = Number(a.menge) || 0;
-      const p = Number(a.preis) || 0;
-      menge += m;
-      wert += m * p;
-    });
-    countMenge.textContent = menge;
-    countWert.textContent = wert.toFixed(2);
-    countWertTotal.textContent = wert.toFixed(2);
+    countMenge.textContent = m;
+    countWert.textContent = w.toFixed(2);
+    countWertTotal.textContent = w.toFixed(2);
   }
 
-  function openPopupNew(){
+  function openNew(){
     editIndex = -1;
-    p_artnr.value = "";
-    p_name.value = "";
-    p_menge.value = 1;
-    p_groesse.value = "";
-    p_preis.value = "";
-    p_ort.value = "";
-    p_datum.value = "";
-    p_bild.value = "";
-    p_notiz.value = "";
-    popup.style.display = "block";
+    p_artnr.value=""; p_name.value=""; p_menge.value=1;
+    p_groesse.value=""; p_preis.value="";
+    p_ort.value=""; p_datum.value="";
+    p_bild.value=""; p_notiz.value="";
+    popup.style.display="block";
   }
 
-  function openPopupEdit(i){
-    editIndex = i;
-    const a = artikel[i];
-    p_artnr.value = a.artnr || "";
-    p_name.value = a.name || "";
-    p_menge.value = a.menge ?? 1;
-    p_groesse.value = a.groesse || "";
-    p_preis.value = a.preis || "";
-    p_ort.value = a.ort || "";
-    p_datum.value = a.datum || "";
-    p_bild.value = "";
-    p_notiz.value = a.notiz || "";
-    popup.style.display = "block";
-  }
-
-  function closePopup(){
-    popup.style.display = "none";
-    editIndex = -1;
-  }
-
-  function saveArtikel(){
+  function save(){
     const artnr = p_artnr.value.trim();
     const name = p_name.value.trim();
+    if (!artnr || !name){alert("Artikelnummer + Name notwendig");return;}
 
-    if (!artnr || !name){
-      alert("Artikelnummer und Name sind Pflicht.");
-      return;
-    }
-
-    const basis = {
-      artnr,
-      name,
-      menge: Number(p_menge.value) || 0,
-      groesse: p_groesse.value.trim(),
-      preis: Number(p_preis.value) || 0,
-      ort: p_ort.value.trim(),
-      datum: p_datum.value,
-      notiz: p_notiz.value.trim()
+    const base = {
+      artnr,name,
+      menge:+p_menge.value||0,
+      groesse:p_groesse.value.trim(),
+      preis:+p_preis.value||0,
+      ort:p_ort.value.trim(),
+      datum:p_datum.value,
+      notiz:p_notiz.value.trim()
     };
 
-    const Datei = p_bild.files[0];
-
     function finalize(b64){
-      const mark = editIndex > -1 ? !!artikel[editIndex].markiert : false;
-      const bildAlt = editIndex > -1 ? (artikel[editIndex].bild || "") : "";
-      const obj = {
-        ...basis,
-        bild: b64 || (Datei ? "" : bildAlt),
-        markiert: mark
-      };
-      if (editIndex > -1){
-        artikel[editIndex] = obj;
-      } else {
-        artikel.push(obj);
-      }
-      localStorage.setItem('lagerData', JSON.stringify(artikel));
-      renderTable();
-      updateCounters();
-      closePopup();
+      const obj = {...base, bild:b64||"", markiert:false};
+      if (editIndex>-1) artikel[editIndex]=obj;
+      else artikel.push(obj);
+      localStorage.setItem('lagerData',JSON.stringify(artikel));
+      renderTable(); updateCounters(); popup.style.display="none";
     }
 
-    if (Datei){
-      const reader = new FileReader();
-      reader.onload = e => finalize(e.target.result);
-      reader.onerror = () => finalize("");
-      reader.readAsDataURL(Datei);
-    } else {
-      finalize("");
+    if (p_bild.files[0]){
+      const r=new FileReader();
+      r.onload=e=>finalize(e.target.result);
+      r.readAsDataURL(p_bild.files[0]);
+    } else finalize("");
+  }
+
+  function edit(i){
+    editIndex=i;
+    const a=artikel[i];
+    p_artnr.value=a.artnr; p_name.value=a.name; p_menge.value=a.menge;
+    p_groesse.value=a.groesse; p_preis.value=a.preis;
+    p_ort.value=a.ort; p_datum.value=a.datum; p_notiz.value=a.notiz;
+    popup.style.display="block";
+  }
+
+  function del(i){
+    if(confirm("Wirklich löschen?")){
+      artikel.splice(i,1);
+      localStorage.setItem('lagerData',JSON.stringify(artikel));
+      renderTable(); updateCounters();
     }
   }
 
-  function toggleMark(i){
-    artikel[i].markiert = !artikel[i].markiert;
-    localStorage.setItem('lagerData', JSON.stringify(artikel));
+  function toggle(i){
+    artikel[i].markiert=!artikel[i].markiert;
+    localStorage.setItem('lagerData',JSON.stringify(artikel));
     renderTable();
-  }
-
-  function deleteArtikel(i){
-    if (!confirm("Artikel wirklich löschen?")) return;
-    artikel.splice(i,1);
-    localStorage.setItem('lagerData', JSON.stringify(artikel));
-    renderTable();
-    updateCounters();
   }
 
   function viewImg(i){
-    const a = artikel[i];
-    if (!a.bild){
-      viewPopup.innerHTML = `<div>Kein Bild hinterlegt.</div><br><button onclick="__closeView()">Schließen</button>`;
-    } else {
-      viewPopup.innerHTML = `<img class="preview" src="${a.bild}"><br><button onclick="__closeView()">Schließen</button>`;
-    }
-    viewPopup.style.display = "block";
+    const a=artikel[i];
+    viewPopup.innerHTML = a.bild
+      ? `<img class="preview" src="${a.bild}"><br><button onclick="viewPopup.style.display='none'">Schließen</button>`
+      : `<div>Kein Bild</div><br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
+    viewPopup.style.display="block";
   }
 
   function viewNote(i){
-    const a = artikel[i];
-    const txt = a.notiz || "Keine Notiz hinterlegt.";
-    viewPopup.innerHTML = `<div style="white-space:pre-wrap;">${txt}</div><br><button onclick="__closeView()">Schließen</button>`;
-    viewPopup.style.display = "block";
+    viewPopup.innerHTML =
+      `<div>${artikel[i].notiz||"Keine Notiz"}</div>
+       <br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
+    viewPopup.style.display="block";
   }
 
-  function closeView(){
-    viewPopup.style.display = "none";
-    viewPopup.innerHTML = "";
-  }
-
-  function doSearch(){
-    const q = (searchInput.value || "").toLowerCase();
-    const rows = tableBody.querySelectorAll('tr');
-    rows.forEach((row, index)=>{
-      const a = artikel[index];
-      const text = [
-        a.artnr,a.name,a.groesse,a.ort,a.notiz,a.datum
-      ].join(" ").toLowerCase();
-      row.style.display = text.includes(q) ? "" : "none";
+  function search(){
+    const q = searchInput.value.toLowerCase();
+    document.querySelectorAll("#tableBody tr").forEach(r=>{
+      r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
     });
   }
 
-  function doExport(){
-    const blob = new Blob([JSON.stringify(artikel)],{type:"application/json"});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = "lager.json";
-    a.click();
+  function exportData(){
+    const blob=new Blob([JSON.stringify(artikel)],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob); a.download="lager.json"; a.click();
   }
 
-  function doImport(){
-    const input = document.createElement('input');
-    input.type = "file";
-    input.accept = "application/json";
-    input.onchange = e=>{
-      const file = e.target.files[0];
-      if (!file) return;
-      const r = new FileReader();
-      r.onload = ev=>{
-        try{
-          const data = JSON.parse(ev.target.result);
-          if (Array.isArray(data)){
-            artikel = data;
-            localStorage.setItem('lagerData', JSON.stringify(artikel));
-            renderTable();
-            updateCounters();
-          }else{
-            alert("Ungültige Datei.");
-          }
-        }catch(err){
-          alert("Fehler beim Lesen der Datei.");
-        }
-      };
-      r.readAsText(file);
+  function importData(){
+    const inp=document.createElement("input"); inp.type="file"; inp.accept="application/json";
+    inp.onchange=e=>{
+      const r=new FileReader();
+      r.onload=()=>{artikel=JSON.parse(r.result);localStorage.setItem("lagerData",JSON.stringify(artikel));renderTable();updateCounters();};
+      r.readAsText(e.target.files[0]);
     };
-    input.click();
+    inp.click();
   }
 
-  function doPDF(){
-    alert("PDF kommt als nächster Schritt.");
-  }
+  function pdf(){ alert("PDF kommt im nächsten Schritt"); }
 
-  // Brücken für onclicks im HTML
-  window.__toggleMark = toggleMark;
-  window.__viewImg = viewImg;
-  window.__viewNote = viewNote;
-  window.__edit = openPopupEdit;
-  window.__del = deleteArtikel;
-  window.__closeView = closeView;
+  window.__toggle=toggle; window.__viewImg=viewImg; window.__viewNote=viewNote;
+  window.__edit=edit; window.__del=del;
 
-  // Events
-  btnAdd.addEventListener('click', openPopupNew);
-  btnCancel.addEventListener('click', closePopup);
-  btnSave.addEventListener('click', saveArtikel);
-  btnExport.addEventListener('click', doExport);
-  btnImport.addEventListener('click', doImport);
-  btnPDF.addEventListener('click', doPDF);
-  searchInput.addEventListener('input', doSearch);
+  btnAdd.onclick=openNew;
+  btnSave.onclick=save;
+  btnCancel.onclick=()=>popup.style.display="none";
+  btnExport.onclick=exportData;
+  btnImport.onclick=importData;
+  btnPDF.onclick=pdf;
+  searchInput.oninput=search;
 
-  window.addEventListener('load', adjustTableTop);
-  window.addEventListener('resize', adjustTableTop);
-
-  // Init
   adjustTableTop();
   renderTable();
   updateCounters();

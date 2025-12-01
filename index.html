@@ -6,18 +6,17 @@
 <title>Lager App</title>
 
 <style>
-body{margin:0;background:#000;color:white;font-family:Arial, sans-serif;overflow:hidden;}
+body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:hidden;}
 
 #topbar{position:fixed;top:0;left:0;right:0;padding:15px;background:#000;z-index:1000;border-bottom:2px solid #333;}
 
 #counterWrapper{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
-
 .counter-box{padding:10px;border:1px solid #444;border-radius:10px;background:#000;}
 .counter-title{font-size:11px;color:#bbb;}
 .counter-value{font-size:18px;font-weight:bold;}
 
 #searchRow{margin-top:10px;}
-#search{width:100%;padding:10px;border-radius:8px;background:#111;border:1px solid #444;color:white;}
+#search{width:100%;padding:10px;border-radius:8px;background:#111;border:1px solid #444;color:white;box-sizing:border-box;}
 
 #buttonRow{margin-top:10px;display:flex;gap:8px;}
 #buttonRow button{flex:1;padding:10px;font-size:11px;color:#bbb;border-radius:10px;background:#000;border:1px solid #444;font-weight:bold;}
@@ -35,7 +34,7 @@ td{padding:5px;font-size:11px;border-bottom:1px solid #222;white-space:nowrap;}
 
 .popup-row{margin-bottom:10px;}
 .popup-row label{font-size:12px;color:#bbb;display:block;margin-bottom:3px;}
-.popup-row input,.popup-row textarea{width:100%;padding:9px;border-radius:8px;border:1px solid #444;background:#1a1a1a;color:white;}
+.popup-row input,.popup-row textarea{width:100%;padding:9px;border-radius:8px;border:1px solid #444;background:#1a1a1a;color:white;box-sizing:border-box;}
 
 #popupButtons{display:flex;gap:8px;margin-top:10px;}
 #popupButtons button{flex:1;padding:12px;border-radius:10px;background:#000;border:1px solid #444;color:white;font-weight:bold;}
@@ -47,150 +46,389 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 <body>
 
 <div id="topbar">
-<div id="counterWrapper">
-<div class="counter-box"><div class="counter-title">Artikel im Bestand</div><div class="counter-value" id="countArtikel">0</div></div>
-<div class="counter-box"><div class="counter-title">Gegenstände insgesamt</div><div class="counter-value" id="countMenge">0</div></div>
-<div class="counter-box"><div class="counter-title">Warenwert aktuell (€)</div><div class="counter-value" id="countWert">0</div></div>
-<div class="counter-box"><div class="counter-title">Warenwert gesamt (€)</div><div class="counter-value" id="countWertTotal">0</div></div>
-</div>
+  <div id="counterWrapper">
+    <div class="counter-box"><div class="counter-title">Artikel im Bestand</div><div class="counter-value" id="countArtikel">0</div></div>
+    <div class="counter-box"><div class="counter-title">Gegenstände insgesamt</div><div class="counter-value" id="countMenge">0</div></div>
+    <div class="counter-box"><div class="counter-title">Warenwert aktuell (€)</div><div class="counter-value" id="countWert">0</div></div>
+    <div class="counter-box"><div class="counter-title">Warenwert gesamt (€)</div><div class="counter-value" id="countWertTotal">0</div></div>
+  </div>
 
-<div id="searchRow"><input id="search" placeholder="Suchen …" oninput="searchTable()"></div>
+  <div id="searchRow">
+    <input id="search" placeholder="Suchen …">
+  </div>
 
-<div id="buttonRow">
-<button onclick="openPopup()">Artikel anlegen</button>
-<button onclick="exportData()">Sichern</button>
-<button onclick="importData()">Laden</button>
-<button onclick="generatePDF()">PDF</button>
-</div>
+  <div id="buttonRow">
+    <button id="btnAdd">Artikel anlegen</button>
+    <button id="btnExport">Sichern</button>
+    <button id="btnImport">Laden</button>
+    <button id="btnPDF">PDF</button>
+  </div>
 </div>
 
 <div id="tableContainer">
-<table>
-<thead>
-<tr><th>*</th><th>Nr</th><th>Name</th><th>Menge</th><th>Größe</th><th>Preis</th><th>Ort</th><th>Datum</th><th>Aktionen</th></tr>
-</thead>
-<tbody id="tableBody"></tbody>
-</table>
+  <table>
+    <thead>
+      <tr>
+        <th>*</th>
+        <th>Nr</th>
+        <th>Name</th>
+        <th>Menge</th>
+        <th>Größe</th>
+        <th>Preis</th>
+        <th>Ort</th>
+        <th>Datum</th>
+        <th>Aktionen</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
 </div>
 
-<!-- ARTIKEL POPUP -->
+<!-- ARTIKEL-POPUP -->
 <div id="popup">
-<div class="popup-row"><label>Artikelnummer</label><input id="p_artnr"></div>
-<div class="popup-row"><label>Name</label><input id="p_name"></div>
-<div class="popup-row"><label>Menge</label><input type="number" id="p_menge" value="1"></div>
-<div class="popup-row"><label>Größe</label><input id="p_groesse"></div>
-<div class="popup-row"><label>Preis</label><input type="number" id="p_preis" step="0.01"></div>
-<div class="popup-row"><label>Ort</label><input id="p_ort"></div>
-<div class="popup-row"><label>Datum</label><input type="date" id="p_datum"></div>
-<div class="popup-row"><label>Bild / Rechnung</label><input type="file" id="p_bild" accept="image/*"></div>
-<div class="popup-row"><label>Notiz</label><textarea id="p_notiz"></textarea></div>
+  <div class="popup-row"><label>Artikelnummer</label><input id="p_artnr"></div>
+  <div class="popup-row"><label>Name</label><input id="p_name"></div>
+  <div class="popup-row"><label>Menge</label><input type="number" id="p_menge" value="1" min="0"></div>
+  <div class="popup-row"><label>Größe</label><input id="p_groesse"></div>
+  <div class="popup-row"><label>Preis</label><input type="number" id="p_preis" step="0.01" min="0"></div>
+  <div class="popup-row"><label>Ort</label><input id="p_ort"></div>
+  <div class="popup-row"><label>Datum</label><input type="date" id="p_datum"></div>
+  <div class="popup-row"><label>Bild / Rechnung</label><input type="file" id="p_bild" accept="image/*"></div>
+  <div class="popup-row"><label>Notiz</label><textarea id="p_notiz"></textarea></div>
 
-<div id="popupButtons">
-<button onclick="saveArtikel()">Speichern</button>
-<button onclick="closePopup()">Abbrechen</button>
-</div>
+  <div id="popupButtons">
+    <button id="btnSave">Speichern</button>
+    <button id="btnCancel">Abbrechen</button>
+  </div>
 </div>
 
-<!-- VIEW POPUP -->
+<!-- VIEW-POPUP (Bild/Notiz) -->
 <div id="viewPopup"></div>
 
 <script>
-let artikel = JSON.parse(localStorage.getItem("lagerData")||"[]");
-let editIndex=-1;
+(function(){
+  // ---- DOM-REFS ----
+  const topbar = document.getElementById('topbar');
+  const tableContainer = document.getElementById('tableContainer');
+  const tableBody = document.getElementById('tableBody');
 
-function formatDatum(d){if(!d)return"";let[a,b,c]=d.split("-");return`${c}-${b}-${a}`}
+  const countArtikel = document.getElementById('countArtikel');
+  const countMenge = document.getElementById('countMenge');
+  const countWert = document.getElementById('countWert');
+  const countWertTotal = document.getElementById('countWertTotal');
 
-function openPopup(){editIndex=-1;popup.style.display="block";p_artnr.value=p_name.value=p_groesse.value=p_ort.value=p_notiz.value="";p_menge.value=1;p_preis.value=0;p_datum.value="";p_bild.value="";}
-function closePopup(){popup.style.display="none";}
-function closeView(){viewPopup.style.display="none";}
+  const searchInput = document.getElementById('search');
 
-function saveArtikel(){
-const obj={
-artnr:p_artnr.value.trim(),name:p_name.value.trim(),menge:+p_menge.value,groesse:p_groesse.value.trim(),
-preis:+p_preis.value,ort:p_ort.value.trim(),datum:p_datum.value,notiz:p_notiz.value.trim(),bild:"",markiert:false};
+  const popup = document.getElementById('popup');
+  const viewPopup = document.getElementById('viewPopup');
 
-if(p_bild.files[0]){
-const r=new FileReader();
-r.onload=e=>{obj.bild=e.target.result;finalSave(obj)};
-r.readAsDataURL(p_bild.files[0]);
-}else finalSave(obj);
-}
+  const p_artnr = document.getElementById('p_artnr');
+  const p_name = document.getElementById('p_name');
+  const p_menge = document.getElementById('p_menge');
+  const p_groesse = document.getElementById('p_groesse');
+  const p_preis = document.getElementById('p_preis');
+  const p_ort = document.getElementById('p_ort');
+  const p_datum = document.getElementById('p_datum');
+  const p_bild = document.getElementById('p_bild');
+  const p_notiz = document.getElementById('p_notiz');
 
-function finalSave(obj){
-if(editIndex>-1){obj.markiert=artikel[editIndex].markiert;artikel[editIndex]=obj;}
-else artikel.push(obj);
-localStorage.setItem("lagerData",JSON.stringify(artikel));
-popup.style.display="none";
-renderTable();updateCounters();
-}
+  const btnAdd = document.getElementById('btnAdd');
+  const btnExport = document.getElementById('btnExport');
+  const btnImport = document.getElementById('btnImport');
+  const btnPDF = document.getElementById('btnPDF');
+  const btnSave = document.getElementById('btnSave');
+  const btnCancel = document.getElementById('btnCancel');
 
-function renderTable(){
-tableBody.innerHTML="";
-artikel.forEach((a,i)=>{
-const tr=document.createElement("tr");
-if(a.markiert)tr.classList.add("marked");
-tr.innerHTML=`
-<td onclick="toggleMark(${i})">${a.markiert?"⭐":"☆"}</td>
-<td>${a.artnr}</td><td>${a.name}</td><td>${a.menge}</td><td>${a.groesse}</td>
-<td>${a.preis.toFixed(2)}</td><td>${a.ort}</td><td>${formatDatum(a.datum)}</td>
-<td class="iconCell">
-<span onclick="viewImage(${i})">📷</span>
-<span onclick="viewNote(${i})">📝</span>
-<span onclick="editArtikel(${i})">✏️</span>
-<span class="delete" onclick="deleteArtikel(${i})">🗑</span>
-</td>`;
-tableBody.appendChild(tr);
-});
-}
+  // ---- DATEN ----
+  let artikel = [];
+  try {
+    artikel = JSON.parse(localStorage.getItem('lagerData') || '[]') || [];
+  } catch(e) {
+    artikel = [];
+  }
+  let editIndex = -1;
 
-function toggleMark(i){artikel[i].markiert=!artikel[i].markiert;localStorage.setItem("lagerData",JSON.stringify(artikel));renderTable();}
+  // Testdaten, falls leer
+  if (artikel.length === 0) {
+    artikel = [
+      {artnr:"1001",name:"Winterjacke",menge:2,groesse:"L",preis:59.99,ort:"Zara",datum:"2023-11-12",bild:"",notiz:"gefüttert",markiert:false},
+      {artnr:"1002",name:"Sneaker Black",menge:1,groesse:"43",preis:89.90,ort:"Snipes",datum:"2024-02-01",bild:"",notiz:"",markiert:false},
+      {artnr:"1003",name:"Jeans Blau",menge:3,groesse:"32/32",preis:39.95,ort:"H&M",datum:"2023-10-20",bild:"",notiz:"Stretch",markiert:false},
+      {artnr:"1004",name:"Hoodie Grau",menge:1,groesse:"XL",preis:29.99,ort:"H&M",datum:"2024-01-15",bild:"",notiz:"",markiert:false},
+      {artnr:"1005",name:"Kappe Schwarz",menge:5,groesse:"One Size",preis:14.99,ort:"Footlocker",datum:"2024-03-02",bild:"",notiz:"neu",markiert:false},
+      {artnr:"1006",name:"Socken 10er Pack",menge:10,groesse:"42-44",preis:12.99,ort:"Primark",datum:"2024-04-10",bild:"",notiz:"Baumwolle",markiert:false},
+      {artnr:"1007",name:"Handschuhe",menge:2,groesse:"L",preis:19.99,ort:"Decathlon",datum:"2023-12-03",bild:"",notiz:"Winter",markiert:false},
+      {artnr:"1008",name:"Rucksack",menge:1,groesse:"30L",preis:49.99,ort:"Amazon",datum:"2024-02-18",bild:"",notiz:"Laptopfach",markiert:false},
+      {artnr:"1009",name:"T-Shirt Weiß",menge:6,groesse:"L",preis:9.99,ort:"H&M",datum:"2024-01-10",bild:"",notiz:"Basic",markiert:false},
+      {artnr:"1010",name:"Sporthose",menge:2,groesse:"M",preis:24.99,ort:"Adidas",datum:"2024-03-20",bild:"",notiz:"atmungsaktiv",markiert:false}
+    ];
+    persist();
+  }
 
-function editArtikel(i){
-editIndex=i;
-const a=artikel[i];
-p_artnr.value=a.artnr;p_name.value=a.name;p_menge.value=a.menge;p_groesse.value=a.groesse;
-p_preis.value=a.preis;p_ort.value=a.ort;p_datum.value=a.datum;p_notiz.value=a.notiz;
-popup.style.display="block";
-}
+  // ---- HELFER ----
+  function persist(){
+    localStorage.setItem('lagerData', JSON.stringify(artikel));
+  }
 
-function deleteArtikel(i){
-if(confirm("Artikel wirklich löschen?")){
-artikel.splice(i,1);localStorage.setItem("lagerData",JSON.stringify(artikel));
-renderTable();updateCounters();
-}
-}
+  function formatDatum(d){
+    if (!d) return "";
+    const parts = d.split("-");
+    if (parts.length !== 3) return d;
+    const [y,m,day] = parts;
+    return `${day}-${m}-${y}`;
+  }
 
-function viewImage(i){
-viewPopup.innerHTML=artikel[i].bild?`<img class="preview" src="${artikel[i].bild}"><br><button onclick="closeView()">Schließen</button>`:"Kein Bild vorhanden";
-viewPopup.style.display="block";
-}
+  function adjustTableTop(){
+    const h = topbar.offsetHeight;
+    tableContainer.style.top = h + 'px';
+  }
 
-function viewNote(i){
-viewPopup.innerHTML=`<div>${artikel[i].notiz||"Keine Notiz"}</div><br><button onclick="closeView()">Schließen</button>`;
-viewPopup.style.display="block";
-}
+  // ---- POPUPS ----
+  function openAddPopup(){
+    editIndex = -1;
+    p_artnr.value = "";
+    p_name.value = "";
+    p_menge.value = 1;
+    p_groesse.value = "";
+    p_preis.value = "";
+    p_ort.value = "";
+    p_datum.value = "";
+    p_bild.value = "";
+    p_notiz.value = "";
+    popup.style.display = 'block';
+  }
 
-function updateCounters(){
-countArtikel.innerText=artikel.length;
-let m=0,w=0;artikel.forEach(a=>{m+=a.menge;w+=a.menge*a.preis});
-countMenge.innerText=m;countWert.innerText=w.toFixed(2);countWertTotal.innerText=w.toFixed(2);
-}
+  function openEditPopup(index){
+    editIndex = index;
+    const a = artikel[index];
+    p_artnr.value = a.artnr || "";
+    p_name.value = a.name || "";
+    p_menge.value = a.menge || 0;
+    p_groesse.value = a.groesse || "";
+    p_preis.value = a.preis || "";
+    p_ort.value = a.ort || "";
+    p_datum.value = a.datum || "";
+    p_notiz.value = a.notiz || "";
+    p_bild.value = "";
+    popup.style.display = 'block';
+  }
 
-function searchTable(){
-const q=search.value.toLowerCase();
-document.querySelectorAll("#tableBody tr").forEach(r=>{
-r.style.display=r.innerText.toLowerCase().includes(q)?"":"none";
-});
-}
+  function closeArticlePopup(){
+    popup.style.display = 'none';
+    editIndex = -1;
+  }
 
-/* Export / Import / PDF gleich gelassen */
-function exportData(){const b=new Blob([JSON.stringify(artikel)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="lager.json";a.click();}
-function importData(){const i=document.createElement("input");i.type="file";i.accept="application/json";i.onchange=e=>{const r=new FileReader();r.onload=()=>{artikel=JSON.parse(r.result);localStorage.setItem("lagerData",JSON.stringify(artikel));renderTable();updateCounters();};r.readAsText(e.target.files[0]);};i.click();}
-function generatePDF(){alert("PDF kommt als nächster Schritt");}
+  function openViewPopup(html){
+    viewPopup.innerHTML = html;
+    viewPopup.style.display = 'block';
+  }
 
-function adjustTableTop(){tableContainer.style.top=topbar.offsetHeight+"px";}
-window.onload=()=>{adjustTableTop();renderTable();updateCounters();}
-window.onresize=adjustTableTop;
+  function closeViewPopup(){
+    viewPopup.style.display = 'none';
+    viewPopup.innerHTML = '';
+  }
+
+  // ---- SPEICHERN ----
+  function onSave(){
+    const baseData = {
+      artnr: (p_artnr.value || "").trim(),
+      name: (p_name.value || "").trim(),
+      menge: Number(p_menge.value) || 0,
+      groesse: (p_groesse.value || "").trim(),
+      preis: Number(p_preis.value) || 0,
+      ort: (p_ort.value || "").trim(),
+      datum: p_datum.value || "",
+      notiz: (p_notiz.value || "").trim()
+    };
+
+    if (!baseData.artnr || !baseData.name){
+      alert("Artikelnummer und Name sind Pflicht.");
+      return;
+    }
+
+    function finalize(b64){
+      const existingMark = editIndex > -1 ? !!artikel[editIndex].markiert : false;
+      const obj = {
+        ...baseData,
+        bild: b64 || (editIndex > -1 ? (artikel[editIndex].bild || "") : ""),
+        markiert: existingMark
+      };
+
+      if (editIndex > -1){
+        artikel[editIndex] = obj;
+      } else {
+        artikel.push(obj);
+      }
+      persist();
+      closeArticlePopup();
+      renderTable();
+      updateCounters();
+    }
+
+    const file = p_bild.files && p_bild.files[0];
+    if (file){
+      const reader = new FileReader();
+      reader.onload = e => finalize(e.target.result);
+      reader.onerror = () => finalize("");
+      reader.readAsDataURL(file);
+    } else {
+      finalize("");
+    }
+  }
+
+  // ---- LÖSCHEN ----
+  function onDelete(index){
+    if (!confirm("Artikel wirklich löschen?")) return;
+    artikel.splice(index, 1);
+    persist();
+    renderTable();
+    updateCounters();
+  }
+
+  // ---- MARKIEREN ----
+  function toggleMark(index){
+    artikel[index].markiert = !artikel[index].markiert;
+    persist();
+    renderTable();
+  }
+
+  // ---- BILD / NOTIZ ANZEIGEN ----
+  function onViewImage(index){
+    const a = artikel[index];
+    if (!a.bild){
+      openViewPopup(`<div>Kein Bild hinterlegt.</div><br><button onclick="closeViewPopup()">Schließen</button>`);
+      return;
+    }
+    const html = `<img class="preview" src="${a.bild}"><br><button onclick="closeViewPopup()">Schließen</button>`;
+    openViewPopup(html);
+  }
+
+  function onViewNote(index){
+    const a = artikel[index];
+    const text = a.notiz ? a.notiz : "Keine Notiz hinterlegt.";
+    const html = `<div style="white-space:pre-wrap;">${text}</div><br><button onclick="closeViewPopup()">Schließen</button>`;
+    openViewPopup(html);
+  }
+
+  // ---- RENDER ----
+  function renderTable(){
+    tableBody.innerHTML = "";
+    artikel.forEach((a, i)=>{
+      const tr = document.createElement('tr');
+      if (a.markiert) tr.classList.add('marked');
+      tr.innerHTML = `
+        <td onclick="__toggleMark(${i})">${a.markiert ? "⭐" : "☆"}</td>
+        <td>${a.artnr || ""}</td>
+        <td>${a.name || ""}</td>
+        <td>${a.menge ?? ""}</td>
+        <td>${a.groesse || ""}</td>
+        <td>${(a.preis || 0).toFixed(2)}</td>
+        <td>${a.ort || ""}</td>
+        <td>${formatDatum(a.datum || "")}</td>
+        <td class="iconCell">
+          <span onclick="__viewImage(${i})">📷</span>
+          <span onclick="__viewNote(${i})">📝</span>
+          <span onclick="__editArtikel(${i})">✏️</span>
+          <span class="delete" onclick="__deleteArtikel(${i})">🗑</span>
+        </td>
+      `;
+      tableBody.appendChild(tr);
+    });
+  }
+
+  // ---- COUNTER ----
+  function updateCounters(){
+    countArtikel.textContent = artikel.length;
+    let menge = 0, wert = 0;
+    artikel.forEach(a=>{
+      const m = Number(a.menge) || 0;
+      const p = Number(a.preis) || 0;
+      menge += m;
+      wert += m * p;
+    });
+    countMenge.textContent = menge;
+    countWert.textContent = wert.toFixed(2);
+    countWertTotal.textContent = wert.toFixed(2);
+  }
+
+  // ---- SUCHE ----
+  function onSearch(){
+    const q = (searchInput.value || "").toLowerCase();
+    const rows = tableBody.querySelectorAll('tr');
+    rows.forEach((row, idx)=>{
+      const a = artikel[idx];
+      const hay = [
+        a.artnr,a.name,a.groesse,a.ort,a.notiz,formatDatum(a.datum)
+      ].join(" ").toLowerCase();
+      row.style.display = hay.includes(q) ? "" : "none";
+    });
+  }
+
+  // ---- EXPORT / IMPORT / PDF ----
+  function onExport(){
+    const blob = new Blob([JSON.stringify(artikel)], {type:"application/json"});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = "lager.json";
+    a.click();
+  }
+
+  function onImport(){
+    const inp = document.createElement('input');
+    inp.type = "file";
+    inp.accept = "application/json";
+    inp.onchange = e=>{
+      const file = e.target.files[0];
+      if (!file) return;
+      const r = new FileReader();
+      r.onload = ev=>{
+        try{
+          const data = JSON.parse(ev.target.result);
+          if (Array.isArray(data)){
+            artikel = data;
+            persist();
+            renderTable();
+            updateCounters();
+          } else {
+            alert("Ungültige Datei.");
+          }
+        }catch(err){
+          alert("Fehler beim Laden der Datei.");
+        }
+      };
+      r.readAsText(file);
+    };
+    inp.click();
+  }
+
+  function onPDF(){
+    alert("PDF kommt als nächster Schritt.");
+  }
+
+  // ---- GLOBALE BRÜCKEN FÜR onclick im HTML ----
+  window.__toggleMark = toggleMark;
+  window.__viewImage = onViewImage;
+  window.__viewNote = onViewNote;
+  window.__editArtikel = openEditPopup;
+  window.__deleteArtikel = onDelete;
+  window.closeViewPopup = closeViewPopup;
+
+  // ---- EVENTS ----
+  btnAdd.addEventListener('click', openAddPopup);
+  btnSave.addEventListener('click', onSave);
+  btnCancel.addEventListener('click', closeArticlePopup);
+  btnExport.addEventListener('click', onExport);
+  btnImport.addEventListener('click', onImport);
+  btnPDF.addEventListener('click', onPDF);
+  searchInput.addEventListener('input', onSearch);
+
+  window.addEventListener('resize', adjustTableTop);
+
+  // ---- INIT ----
+  adjustTableTop();
+  renderTable();
+  updateCounters();
+})();
 </script>
 
 </body>

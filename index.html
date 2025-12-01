@@ -21,7 +21,6 @@ body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:
   position:fixed;left:0;right:0;bottom:0;
   overflow-y:auto;overflow-x:auto;
   background:#000;z-index:100;
-  -webkit-overflow-scrolling:touch;
 }
 
 table{width:100%;border-collapse:collapse;}
@@ -39,9 +38,15 @@ width:90%;max-width:360px;max-height:90vh;overflow-y:auto;display:none;z-index:9
 }
 .popup-row{margin-bottom:8px;}
 .popup-row label{font-size:12px;color:#bbb;display:block;margin-bottom:3px;}
-.popup-row input,.popup-row textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #444;background:#1a1a1a;color:white;}
+.popup-row input,.popup-row textarea{
+width:100%;padding:8px;border-radius:8px;
+border:1px solid #444;background:#1a1a1a;color:white;
+}
 #popupButtons{display:flex;gap:8px;margin-top:10px;}
-#popupButtons button{flex:1;padding:11px;border-radius:10px;background:#000;border:1px solid #444;color:white;font-weight:bold;}
+#popupButtons button{
+flex:1;padding:11px;border-radius:10px;
+background:#000;border:1px solid #444;color:white;font-weight:bold;
+}
 img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 </style>
 </head>
@@ -101,12 +106,6 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let editIndex = -1;
 
-function adjustTableTop(){
-  document.getElementById("tableContainer").style.top =
-    document.getElementById("topbar").offsetHeight + "px";
-}
-
-/* TESTDATEN */
 if(artikel.length===0){
 artikel=[
 {artnr:"1001-2025",name:"Winterjacke",menge:2,groesse:"L",preis:59.99,ort:"Zara",datum:"2025-01-10",bild:"",notiz:"",markiert:false},
@@ -116,6 +115,11 @@ artikel=[
 {artnr:"1005-2025",name:"Cap",menge:5,groesse:"One Size",preis:14.99,ort:"Footlocker",datum:"2025-05-20",bild:"",notiz:"",markiert:false}
 ];
 localStorage.setItem("lagerData",JSON.stringify(artikel));
+}
+
+function adjustTableTop(){
+document.getElementById("tableContainer").style.top =
+document.getElementById("topbar").offsetHeight + "px";
 }
 
 function renderTable(){
@@ -141,7 +145,7 @@ tr.innerHTML=`
 tableBody.appendChild(tr);
 });
 updateCounters();
-adjustTableTop();   // ✅ Tabelle sitzt jetzt direkt unter dem Header
+adjustTableTop();
 }
 
 function updateQty(i,val){
@@ -159,7 +163,6 @@ countWert.textContent=w.toFixed(2);
 countWertTotal.textContent=w.toFixed(2);
 }
 
-/* NEUER ARTIKEL */
 btnAdd.onclick=()=>{
 editIndex=-1;
 p_artnr.value="";p_name.value="";p_menge.value=1;
@@ -167,21 +170,6 @@ p_groesse.value="";p_preis.value="";p_ort.value="";
 p_datum.value="";p_bild.value="";p_notiz.value="";
 popup.style.display="block";
 };
-
-/* BEARBEITEN */
-function editArtikel(i){
-editIndex=i;
-const a=artikel[i];
-p_artnr.value=a.artnr;
-p_name.value=a.name;
-p_menge.value=a.menge;
-p_groesse.value=a.groesse;
-p_preis.value=a.preis;
-p_ort.value=a.ort;
-p_datum.value=a.datum;
-p_notiz.value=a.notiz;
-popup.style.display="block";
-}
 
 btnCancel.onclick=()=>{popup.style.display="none";editIndex=-1;};
 
@@ -232,6 +220,20 @@ renderTable();
 }
 }
 
+function editArtikel(i){
+editIndex=i;
+const a=artikel[i];
+p_artnr.value=a.artnr;
+p_name.value=a.name;
+p_menge.value=a.menge;
+p_groesse.value=a.groesse;
+p_preis.value=a.preis;
+p_ort.value=a.ort;
+p_datum.value=a.datum;
+p_notiz.value=a.notiz;
+popup.style.display="block";
+}
+
 function viewImg(i){
 const a=artikel[i];
 viewPopup.innerHTML=a.bild?
@@ -246,6 +248,42 @@ viewPopup.innerHTML=`<div>${artikel[i].notiz||"Keine Notiz"}</div>
 viewPopup.style.display="block";
 }
 
+/* ✅ SICHERN */
+btnExport.onclick=()=>{
+const blob=new Blob([JSON.stringify(artikel)], {type:"application/json"});
+const a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="lager_sicherung.json";
+a.click();
+};
+
+/* ✅ LADEN */
+btnImport.onclick=()=>{
+const inp=document.createElement("input");
+inp.type="file";
+inp.accept="application/json";
+inp.onchange=e=>{
+const file=e.target.files[0];
+const r=new FileReader();
+r.onload=()=>{
+artikel=JSON.parse(r.result);
+localStorage.setItem("lagerData",JSON.stringify(artikel));
+renderTable();
+};
+r.readAsText(file);
+};
+inp.click();
+};
+
+/* ✅ SUCHE */
+search.oninput=()=>{
+const q=search.value.toLowerCase();
+document.querySelectorAll("#tableBody tr").forEach(r=>{
+r.style.display=r.innerText.toLowerCase().includes(q)?"":"none";
+});
+};
+
+/* ✅ PDF */
 btnPDF.onclick=()=>{
 let w=window.open("","_blank");
 let html=`<table border="1" cellpadding="4">

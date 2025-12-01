@@ -19,9 +19,13 @@ body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:
 
 #tableContainer{
   position:fixed;
-  left:0; right:0; bottom:0;
-  overflow-y:auto; overflow-x:auto;
-  background:#000; z-index:100;
+  left:0;
+  right:0;
+  bottom:0;
+  overflow-y:auto;
+  overflow-x:auto;
+  background:#000;
+  z-index:100;
 }
 
 table{width:100%;border-collapse:collapse;}
@@ -44,7 +48,10 @@ width:100%;padding:8px;border-radius:8px;
 border:1px solid #444;background:#1a1a1a;color:white;
 }
 #popupButtons{display:flex;gap:8px;margin-top:10px;}
-#popupButtons button{flex:1;padding:11px;border-radius:10px;background:#000;border:1px solid #444;color:white;font-weight:bold;}
+#popupButtons button{
+flex:1;padding:11px;border-radius:10px;
+background:#000;border:1px solid:#444;color:white;font-weight:bold;
+}
 img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 </style>
 </head>
@@ -82,17 +89,330 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 </table>
 </div>
 
-<!-- POPUPS + SCRIPT bleiben genau wie zuletzt funktionierend -->
+<div id="popup">
+  <div class="popup-row"><label>Artikelnummer</label><input id="p_artnr"></div>
+  <div class="popup-row"><label>Name</label><input id="p_name"></div>
+  <div class="popup-row"><label>Menge</label><input type="number" id="p_menge" value="1"></div>
+  <div class="popup-row"><label>Größe</label><input id="p_groesse"></div>
+  <div class="popup-row"><label>Preis</label><input type="number" id="p_preis"></div>
+  <div class="popup-row"><label>Ort</label><input id="p_ort"></div>
+  <div class="popup-row"><label>Datum</label><input type="date" id="p_datum"></div>
+  <div class="popup-row"><label>Bild</label><input type="file" id="p_bild"></div>
+  <div class="popup-row"><label>Notiz</label><textarea id="p_notiz"></textarea></div>
+  <div id="popupButtons">
+    <button id="btnSave">Speichern</button>
+    <button id="btnCancel">Abbrechen</button>
+  </div>
+</div>
+
+<div id="viewPopup"></div>
 
 <script>
-function adjustTableTop(){
-  const header=document.getElementById("topbar");
-  const table=document.getElementById("tableContainer");
-  table.style.top = header.offsetHeight + "px";
+let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
+let editIndex = -1;
+
+/* ===== Artikelnummern-Logik ===== */
+
+function initArtNrCounter(){
+  const jahr = new Date().getFullYear();
+  const key  = "artnrCounter_" + jahr;
+
+  if (localStorage.getItem(key) !== null) return;
+
+  let max = -1;
+  artikel.forEach(a=>{
+    if(!a.artnr) return;
+    const m = a.artnr.match(/^(\d{3})-(\d{4})$/);
+    if(m && Number(m[2]) === jahr){
+      max = Math.max(max, Number(m[1]));
+    }
+  });
+
+  // wenn noch keine Artikel: bei -1 starten => erster wird 000-YYYY
+  localStorage.setItem(key, max);
 }
 
-window.addEventListener("resize",adjustTableTop);
-window.addEventListener("load",adjustTableTop);
+function previewNextArtNr(){
+  const jahr = new Date().getFullYear();
+  const key  = "artnrCounter_" + jahr;
+  const val  = Number(localStorage.getItem(key) || -1) + 1;
+  return String(val).padStart(3,"0") + "-" + jahr;
+}
+
+function commitNextArtNr(){
+  const jahr = new Date().getFullYear();
+  const key  = "artnrCounter_" + jahr;
+  let counter = Number(localStorage.getItem(key) || -1) + 1;
+  localStorage.setItem(key, counter);
+  return String(counter).padStart(3,"0") + "-" + jahr;
+}
+
+initArtNrCounter();
+
+/* ===== Layout: Tabelle direkt unter Header ===== */
+
+function adjustTableTop(){
+  const header = document.getElementById("topbar");
+  const tableC = document.getElementById("tableContainer");
+  tableC.style.top = header.offsetHeight + "px";
+}
+window.addEventListener("load", adjustTableTop);
+window.addEventListener("resize", adjustTableTop);
+
+/* ===== Datum formatieren (TT-MM-JJJJ) ===== */
+
+function formatDate(d){
+  if(!d) return "";
+  const [y,m,dd] = d.split("-");
+  return `${dd}-${m}-${y}`;
+}
+
+/* ===== Rendern ===== */
+
+function renderTable(){
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
+
+  artikel.forEach((a,i)=>{
+    const tr = document.createElement("tr");
+    if(a.markiert) tr.classList.add("marked");
+    const gesamt = (a.preis * a.menge).toFixed(2);
+
+    tr.innerHTML = `
+      <td onclick="toggleMark(${i})">${a.markiert ? "⭐" : "☆"}</td>
+      <td>${a.artnr || ""}</td>
+      <td>${a.name || ""}</td>
+      <td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
+      <td>${a.groesse || ""}</td>
+      <td>${isNaN(a.preis) ? "" : a.preis.toFixed(2)}</td>
+      <td>${isNaN(a.preis) ? "" : gesamt}</td>
+      <td>${a.ort || ""}</td>
+      <td>${a.datum ? formatDate(a.datum) : ""}</td>
+      <td class="iconCell">
+        <span onclick="viewImg(${i})">📷</span>
+        <span onclick="viewNote(${i})">📝</span>
+        <span class="delete" onclick="del(${i})">🗑</span>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  updateCounters();
+  adjustTableTop();
+}
+
+/* ===== Zähler ===== */
+
+function updateCounters(){
+  let m = 0;
+  let w = 0;
+  artikel.forEach(a=>{
+    m += a.menge || 0;
+    w += (a.menge || 0) * (a.preis || 0);
+  });
+  document.getElementById("countArtikel").textContent   = artikel.length;
+  document.getElementById("countMenge").textContent     = m;
+  document.getElementById("countWert").textContent      = w.toFixed(2);
+  document.getElementById("countWertTotal").textContent = w.toFixed(2);
+}
+
+/* ===== Menge direkt in Tabelle ===== */
+
+function updateQty(i,val){
+  artikel[i].menge = parseInt(val) || 0;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  renderTable();
+}
+
+/* ===== Markieren (⭐) ===== */
+
+function toggleMark(i){
+  artikel[i].markiert = !artikel[i].markiert;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  renderTable();
+}
+
+/* ===== Pop-up Logik ===== */
+
+const btnAdd    = document.getElementById("btnAdd");
+const btnSave   = document.getElementById("btnSave");
+const btnCancel = document.getElementById("btnCancel");
+const popup     = document.getElementById("popup");
+
+btnAdd.onclick = () => {
+  editIndex = -1;
+  document.getElementById("p_artnr").value   = previewNextArtNr(); // nur Vorschau, kein Zählschritt
+  document.getElementById("p_name").value    = "";
+  document.getElementById("p_menge").value   = 1;
+  document.getElementById("p_groesse").value = "";
+  document.getElementById("p_preis").value   = "";
+  document.getElementById("p_ort").value     = "";
+  document.getElementById("p_datum").value   = "";
+  document.getElementById("p_bild").value    = "";
+  document.getElementById("p_notiz").value   = "";
+  popup.style.display = "block";
+};
+
+btnCancel.onclick = () => {
+  popup.style.display = "none";
+  editIndex = -1;
+};
+
+btnSave.onclick = () => {
+  if (editIndex === -1){
+    // neuer Artikel => Artikelnummer wirklich verbrauchen
+    const nextNr = commitNextArtNr();
+    const artnrInput = document.getElementById("p_artnr").value.trim();
+    const artnr = artnrInput || nextNr;
+
+    const obj = {
+      artnr,
+      name:   document.getElementById("p_name").value.trim(),
+      menge: +document.getElementById("p_menge").value || 0,
+      groesse:document.getElementById("p_groesse").value.trim(),
+      preis: +document.getElementById("p_preis").value || 0,
+      ort:    document.getElementById("p_ort").value.trim(),
+      datum:  document.getElementById("p_datum").value,
+      notiz:  document.getElementById("p_notiz").value.trim(),
+      bild:   "",
+      markiert:false
+    };
+
+    const file = document.getElementById("p_bild").files[0];
+    if(file){
+      const r = new FileReader();
+      r.onload = e => { obj.bild = e.target.result; pushNew(obj); };
+      r.readAsDataURL(file);
+    } else {
+      pushNew(obj);
+    }
+
+  } else {
+    // Bearbeiten: Artikelnummer nicht antasten, nur übernehmen
+    const a    = artikel[editIndex];
+    const artnrInput = document.getElementById("p_artnr").value.trim();
+    const obj = {
+      artnr:  artnrInput || a.artnr,
+      name:   document.getElementById("p_name").value.trim(),
+      menge: +document.getElementById("p_menge").value || 0,
+      groesse:document.getElementById("p_groesse").value.trim(),
+      preis: +document.getElementById("p_preis").value || 0,
+      ort:    document.getElementById("p_ort").value.trim(),
+      datum:  document.getElementById("p_datum").value,
+      notiz:  document.getElementById("p_notiz").value.trim(),
+      bild:   a.bild || "",
+      markiert:a.markiert || false
+    };
+
+    const file = document.getElementById("p_bild").files[0];
+    if(file){
+      const r = new FileReader();
+      r.onload = e => { obj.bild = e.target.result; applyEdit(obj); };
+      r.readAsDataURL(file);
+    } else {
+      applyEdit(obj);
+    }
+  }
+};
+
+function pushNew(obj){
+  artikel.push(obj);
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  popup.style.display = "none";
+  editIndex = -1;
+  renderTable();
+}
+
+function applyEdit(obj){
+  artikel[editIndex] = obj;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  popup.style.display = "none";
+  editIndex = -1;
+  renderTable();
+}
+
+/* ===== Löschen, Bild, Notiz ===== */
+
+function del(i){
+  if(confirm("Wirklich löschen?")){
+    artikel.splice(i,1);
+    localStorage.setItem("lagerData", JSON.stringify(artikel));
+    renderTable();
+  }
+}
+
+const viewPopup = document.getElementById("viewPopup");
+
+function viewImg(i){
+  const a = artikel[i];
+  viewPopup.innerHTML = a.bild
+    ? `<img class="preview" src="${a.bild}"><br><button onclick="viewPopup.style.display='none'">Schließen</button>`
+    : `<div>Kein Bild</div><br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
+  viewPopup.style.display = "block";
+}
+
+function viewNote(i){
+  const a = artikel[i];
+  viewPopup.innerHTML = `<div>${a.notiz || "Keine Notiz"}</div>
+  <br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
+  viewPopup.style.display = "block";
+}
+
+/* ===== Sichern / Laden / PDF / Suche ===== */
+
+const btnExport = document.getElementById("btnExport");
+const btnImport = document.getElementById("btnImport");
+const btnPDF    = document.getElementById("btnPDF");
+const searchInp = document.getElementById("search");
+
+btnExport.onclick = () => {
+  const blob = new Blob([JSON.stringify(artikel)], {type:"application/json"});
+  const a    = document.createElement("a");
+  a.href     = URL.createObjectURL(blob);
+  a.download = "lager_sicherung.json";
+  a.click();
+};
+
+btnImport.onclick = () => {
+  const inp = document.createElement("input");
+  inp.type  = "file";
+  inp.accept= "application/json";
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const r = new FileReader();
+    r.onload = () => {
+      artikel = JSON.parse(r.result);
+      localStorage.setItem("lagerData", JSON.stringify(artikel));
+      initArtNrCounter();
+      renderTable();
+    };
+    r.readAsText(file);
+  };
+  inp.click();
+};
+
+btnPDF.onclick = () => {
+  let w = window.open("","_blank");
+  let html = `<table border="1" cellpadding="4">
+  <tr><th>Nr</th><th>Name</th><th>Menge</th><th>Notiz</th></tr>`;
+  artikel.forEach(a=>{
+    html += `<tr><td>${a.artnr||""}</td><td>${a.name||""}</td><td>${a.menge||0}</td><td></td></tr>`;
+  });
+  html += `</table>`;
+  w.document.write(html);
+  w.print();
+};
+
+searchInp.oninput = () => {
+  const q = searchInp.value.toLowerCase();
+  document.querySelectorAll("#tableBody tr").forEach(r=>{
+    r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
+  });
+};
+
+/* ===== Start ===== */
+renderTable();
 </script>
 
 </body>

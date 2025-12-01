@@ -31,7 +31,6 @@ table{width:100%;border-collapse:collapse;}
 th{background:#111;position:sticky;top:0;z-index:200;padding:6px;color:#bbb;font-size:10px;white-space:nowrap;}
 td{padding:5px;font-size:11px;border-bottom:1px solid #222;white-space:nowrap;}
 .marked{background:#222;}
-
 .iconCell span{cursor:pointer;margin-right:8px;}
 .iconCell span.delete{margin-left:18px;}
 input.miniQty{width:42px;background:#111;color:white;border:1px solid #444;border-radius:5px;text-align:center;}
@@ -45,10 +44,8 @@ width:90%;max-width:360px;max-height:90vh;overflow-y:auto;display:none;z-index:9
 .popup-row{margin-bottom:8px;}
 .popup-row label{font-size:12px;color:#bbb;display:block;margin-bottom:3px;}
 .popup-row input,.popup-row textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #444;background:#1a1a1a;color:white;}
-
 #popupButtons{display:flex;gap:8px;margin-top:10px;}
 #popupButtons button{flex:1;padding:11px;border-radius:10px;background:#000;border:1px solid #444;color:white;font-weight:bold;}
-
 img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 </style>
 </head>
@@ -78,7 +75,7 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 <thead>
 <tr>
 <th>*</th><th>Nr</th><th>Name</th><th>Menge</th>
-<th>Größe</th><th>Einz.-Preis</th><th>Gesamt</th>
+<th>Größe</th><th>Einz.</th><th>Gesamt</th>
 <th>Ort</th><th>Datum</th><th>Aktionen</th>
 </tr>
 </thead>
@@ -108,8 +105,22 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let editIndex = -1;
 
-/* ✅ ZÄHLER EXPLIZIT AUF 000-2025 ZURÜCKSETZEN */
-localStorage.setItem("artnrCounter_2025", "-1");
+/* ✅ Artikelnummern-Init */
+function initArtNrCounter(){
+  const jahr = new Date().getFullYear();
+  const key = "artnrCounter_" + jahr;
+  if(localStorage.getItem(key) !== null) return;
+
+  let max = -1;
+  artikel.forEach(a=>{
+    if(!a.artnr) return;
+    const m = a.artnr.match(/^(\d{3})-(\d{4})$/);
+    if(m && Number(m[2]) === jahr){
+      max = Math.max(max, Number(m[1]));
+    }
+  });
+  localStorage.setItem(key, max);
+}
 
 function getNextArtNr(){
   const jahr = new Date().getFullYear();
@@ -119,7 +130,9 @@ function getNextArtNr(){
   return String(counter).padStart(3,"0") + "-" + jahr;
 }
 
-/* ✅ Datum in TT-MM-JJJJ umwandeln */
+initArtNrCounter();
+
+/* ✅ Datum formatieren TT-MM-JJJJ */
 function formatDate(d){
   if(!d) return "";
   const [y,m,dd] = d.split("-");
@@ -127,115 +140,163 @@ function formatDate(d){
 }
 
 function renderTable(){
-tableBody.innerHTML="";
-artikel.forEach((a,i)=>{
-const tr=document.createElement("tr");
-if(a.markiert)tr.classList.add("marked");
-const gesamt = (a.preis * a.menge).toFixed(2);
-tr.innerHTML=`
-<td onclick="toggleMark(${i})">${a.markiert?"⭐":"☆"}</td>
-<td>${a.artnr}</td>
-<td>${a.name}</td>
-<td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
-<td>${a.groesse}</td>
-<td>${a.preis.toFixed(2)}</td>
-<td>${gesamt}</td>
-<td>${a.ort}</td>
-<td>${formatDate(a.datum)}</td>
-<td class="iconCell">
-<span onclick="viewImg(${i})">📷</span>
-<span onclick="viewNote(${i})">📝</span>
-<span onclick="editArtikel(${i})">✏️</span>
-<span class="delete" onclick="del(${i})">🗑</span>
-</td>`;
-tableBody.appendChild(tr);
-});
-updateCounters();
+  tableBody.innerHTML="";
+  artikel.forEach((a,i)=>{
+    const tr=document.createElement("tr");
+    if(a.markiert)tr.classList.add("marked");
+    const gesamt=(a.preis*a.menge).toFixed(2);
+
+    tr.innerHTML=`
+      <td onclick="toggleMark(${i})">${a.markiert?"⭐":"☆"}</td>
+      <td>${a.artnr}</td>
+      <td>${a.name}</td>
+      <td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
+      <td>${a.groesse}</td>
+      <td>${a.preis.toFixed(2)}</td>
+      <td>${gesamt}</td>
+      <td>${a.ort}</td>
+      <td>${formatDate(a.datum)}</td>
+      <td class="iconCell">
+        <span onclick="viewImg(${i})">📷</span>
+        <span onclick="viewNote(${i})">📝</span>
+        <span onclick="editArtikel(${i})">✏️</span>
+        <span class="delete" onclick="del(${i})">🗑</span>
+      </td>`;
+    tableBody.appendChild(tr);
+  });
+  updateCounters();
 }
 
 function updateQty(i,val){
-artikel[i].menge=parseInt(val)||0;
-localStorage.setItem("lagerData",JSON.stringify(artikel));
-renderTable();
+  artikel[i].menge=parseInt(val)||0;
+  localStorage.setItem("lagerData",JSON.stringify(artikel));
+  renderTable();
 }
 
 function updateCounters(){
-countArtikel.textContent=artikel.length;
-let m=0,w=0;
-artikel.forEach(a=>{m+=a.menge;w+=a.menge*a.preis});
-countMenge.textContent=m;
-countWert.textContent=w.toFixed(2);
-countWertTotal.textContent=w.toFixed(2);
+  countArtikel.textContent=artikel.length;
+  let m=0,w=0;
+  artikel.forEach(a=>{m+=a.menge;w+=a.menge*a.preis});
+  countMenge.textContent=m;
+  countWert.textContent=w.toFixed(2);
+  countWertTotal.textContent=w.toFixed(2);
 }
 
 btnAdd.onclick=()=>{
-editIndex=-1;
-p_artnr.value = getNextArtNr();
-p_name.value="";p_menge.value=1;p_groesse.value="";
-p_preis.value="";p_ort.value="";p_datum.value="";
-p_bild.value="";p_notiz.value="";
-popup.style.display="block";
+  editIndex=-1;
+  p_artnr.value=getNextArtNr();
+  p_name.value="";p_menge.value=1;p_groesse.value="";
+  p_preis.value="";p_ort.value="";p_datum.value="";
+  p_bild.value="";p_notiz.value="";
+  popup.style.display="block";
 };
 
 btnCancel.onclick=()=>{popup.style.display="none";editIndex=-1;};
 
 btnSave.onclick=()=>{
-const obj={
-artnr:p_artnr.value,name:p_name.value,menge:+p_menge.value,
-groesse:p_groesse.value,preis:+p_preis.value,ort:p_ort.value,
-datum:p_datum.value,notiz:p_notiz.value,bild:"",markiert:false
-};
+  const obj={
+    artnr:p_artnr.value,name:p_name.value,menge:+p_menge.value,
+    groesse:p_groesse.value,preis:+p_preis.value,ort:p_ort.value,
+    datum:p_datum.value,notiz:p_notiz.value,bild:"",markiert:false
+  };
 
-if(p_bild.files[0]){
-const r=new FileReader();
-r.onload=e=>{obj.bild=e.target.result;push(obj);}
-r.readAsDataURL(p_bild.files[0]);
-}else push(obj);
+  if(p_bild.files[0]){
+    const r=new FileReader();
+    r.onload=e=>{obj.bild=e.target.result;push(obj);}
+    r.readAsDataURL(p_bild.files[0]);
+  }else push(obj);
 };
 
 function push(obj){
-if(editIndex>-1){obj.markiert = artikel[editIndex].markiert;artikel[editIndex]=obj;}
-else artikel.push(obj);
-localStorage.setItem("lagerData",JSON.stringify(artikel));
-popup.style.display="none";editIndex=-1;renderTable();
+  if(editIndex>-1){
+    obj.markiert = artikel[editIndex].markiert;
+    artikel[editIndex]=obj;
+  }else artikel.push(obj);
+
+  localStorage.setItem("lagerData",JSON.stringify(artikel));
+  popup.style.display="none";editIndex=-1;
+  renderTable();
 }
 
-function toggleMark(i){artikel[i].markiert=!artikel[i].markiert;renderTable();}
-function del(i){if(confirm("Wirklich löschen?")){artikel.splice(i,1);renderTable();}}
+/* ✅ FIX: Stern bleibt jetzt auch offline */
+function toggleMark(i){
+  artikel[i].markiert = !artikel[i].markiert;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  renderTable();
+}
+
+function del(i){
+  if(confirm("Wirklich löschen?")){
+    artikel.splice(i,1);
+    localStorage.setItem("lagerData",JSON.stringify(artikel));
+    renderTable();
+  }
+}
+
 function editArtikel(i){
-editIndex=i;const a=artikel[i];
-p_artnr.value=a.artnr;p_name.value=a.name;p_menge.value=a.menge;
-p_groesse.value=a.groesse;p_preis.value=a.preis;p_ort.value=a.ort;
-p_datum.value=a.datum;p_notiz.value=a.notiz;popup.style.display="block";
+  editIndex=i;const a=artikel[i];
+  p_artnr.value=a.artnr;p_name.value=a.name;p_menge.value=a.menge;
+  p_groesse.value=a.groesse;p_preis.value=a.preis;p_ort.value=a.ort;
+  p_datum.value=a.datum;p_notiz.value=a.notiz;
+  popup.style.display="block";
 }
 
 function viewImg(i){
-const a=artikel[i];
-viewPopup.innerHTML=a.bild?
-`<img class="preview" src="${a.bild}"><br><button onclick="viewPopup.style.display='none'">Schließen</button>`:
-`<div>Kein Bild</div><br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
-viewPopup.style.display="block";
+  const a=artikel[i];
+  viewPopup.innerHTML=a.bild?
+  `<img class="preview" src="${a.bild}"><br><button onclick="viewPopup.style.display='none'">Schließen</button>`:
+  `<div>Kein Bild</div><br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
+  viewPopup.style.display="block";
 }
 
 function viewNote(i){
-viewPopup.innerHTML=`<div>${artikel[i].notiz||"Keine Notiz"}</div>
-<br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
-viewPopup.style.display="block";
+  viewPopup.innerHTML=`<div>${artikel[i].notiz||"Keine Notiz"}</div>
+  <br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
+  viewPopup.style.display="block";
 }
 
-btnExport.onclick=()=>{const blob=new Blob([JSON.stringify(artikel)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="lager_sicherung.json";a.click();}
-btnImport.onclick=()=>{
-const inp=document.createElement("input");inp.type="file";inp.accept="application/json";
-inp.onchange=e=>{const r=new FileReader();r.onload=()=>{artikel=JSON.parse(r.result);renderTable();};r.readAsText(e.target.files[0]);};inp.click();
+btnExport.onclick=()=>{
+  const blob=new Blob([JSON.stringify(artikel)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="lager_sicherung.json";
+  a.click();
 };
 
-search.oninput=()=>{const q=search.value.toLowerCase();document.querySelectorAll("#tableBody tr").forEach(r=>{r.style.display=r.innerText.toLowerCase().includes(q)?"":"none";});};
+btnImport.onclick=()=>{
+  const inp=document.createElement("input");
+  inp.type="file";
+  inp.accept="application/json";
+  inp.onchange=e=>{
+    const r=new FileReader();
+    r.onload=()=>{
+      artikel=JSON.parse(r.result);
+      localStorage.setItem("lagerData",JSON.stringify(artikel));
+      renderTable();
+    };
+    r.readAsText(e.target.files[0]);
+  };
+  inp.click();
+};
+
+search.oninput=()=>{
+  const q=search.value.toLowerCase();
+  document.querySelectorAll("#tableBody tr").forEach(r=>{
+    r.style.display=r.innerText.toLowerCase().includes(q)?"":"none";
+  });
+};
 
 btnPDF.onclick=()=>{
-let w=window.open("","_blank");
-let html=`<table border="1" cellpadding="4"><tr><th>Nr</th><th>Name</th><th>Menge</th><th>Notiz</th></tr>`;
-artikel.forEach(a=>{html+=`<tr><td>${a.artnr}</td><td>${a.name}</td><td>${a.menge}</td><td></td></tr>`;});
-html+=`</table>`;w.document.write(html);w.print();
+  let w=window.open("","_blank");
+  let html=`<table border="1" cellpadding="4"><tr>
+  <th>Nr</th><th>Name</th><th>Menge</th><th>Notiz</th></tr>`;
+  artikel.forEach(a=>{
+    html+=`<tr><td>${a.artnr}</td><td>${a.name}</td>
+    <td>${a.menge}</td><td></td></tr>`;
+  });
+  html+=`</table>`;
+  w.document.write(html);
+  w.print();
 };
 
 renderTable();

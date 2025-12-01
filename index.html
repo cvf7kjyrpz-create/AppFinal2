@@ -8,10 +8,12 @@
 <style>
 body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:hidden;}
 #topbar{position:fixed;top:0;left:0;right:0;padding:15px;background:#000;z-index:5000;border-bottom:2px solid #333;}
+
 #counterWrapper{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
 .counter-box{padding:10px;border:1px solid #444;border-radius:10px;background:#000;}
 .counter-title{font-size:11px;color:#bbb;}
 .counter-value{font-size:18px;font-weight:bold;}
+
 #searchRow{margin-top:10px;}
 #search{
   width:100%;
@@ -20,41 +22,62 @@ body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:
   background:#111;
   border:1px solid #444;
   color:white;
-  box-sizing:border-box;  /* ✅ FIX: Suchfeld läuft nicht mehr über den Rand */
+  box-sizing:border-box;
 }
-#buttonRow{margin-top:10px;display:flex;gap:8px;}
-#buttonRow button{flex:1;padding:10px;font-size:11px;color:#bbb;border-radius:10px;background:#000;border:1px solid #444;font-weight:bold;}
 
+#buttonRow{margin-top:10px;display:flex;gap:8px;}
+#buttonRow button{
+  flex:1;padding:10px;font-size:11px;color:#bbb;
+  border-radius:10px;background:#000;border:1px solid #444;font-weight:bold;
+}
+
+/* ✅ FINALES FIX: Tabelle sitzt korrekt */
 #tableContainer{
-  position:fixed;left:0;right:0;bottom:0;
-  overflow-y:auto;overflow-x:auto;
-  background:#000;z-index:100;
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  top:0;
+  padding-top:230px;
+  overflow-y:auto;
+  overflow-x:auto;
+  background:#000;
+  z-index:100;
 }
 
 table{width:100%;border-collapse:collapse;}
 th{background:#111;position:sticky;top:0;z-index:200;padding:6px;color:#bbb;font-size:10px;white-space:nowrap;}
 td{padding:5px;font-size:11px;border-bottom:1px solid #222;white-space:nowrap;}
 .marked{background:#222;}
+
 .iconCell span{cursor:pointer;margin-right:8px;}
 .iconCell span.delete{margin-left:18px;}
-input.miniQty{width:42px;background:#111;color:white;border:1px solid #444;border-radius:5px;text-align:center;}
+
+input.miniQty{
+  width:42px;background:#111;color:white;
+  border:1px solid #444;border-radius:5px;text-align:center;
+}
 
 #popup,#viewPopup{
 position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
 background:#111;padding:16px;border:2px solid #444;border-radius:12px;
-width:90%;max-width:360px;max-height:90vh;overflow-y:auto;display:none;z-index:9999;
+width:90%;max-width:360px;max-height:90vh;overflow-y:auto;
+display:none;z-index:9999;
 }
+
 .popup-row{margin-bottom:8px;}
 .popup-row label{font-size:12px;color:#bbb;display:block;margin-bottom:3px;}
 .popup-row input,.popup-row textarea{
 width:100%;padding:8px;border-radius:8px;
 border:1px solid #444;background:#1a1a1a;color:white;
 }
+
 #popupButtons{display:flex;gap:8px;margin-top:10px;}
 #popupButtons button{
 flex:1;padding:11px;border-radius:10px;
 background:#000;border:1px solid #444;color:white;font-weight:bold;
 }
+
 img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 </style>
 </head>
@@ -114,7 +137,7 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let editIndex = -1;
 
-/* ✅ Jahreszähler aus bestehenden Daten initialisieren */
+/* ✅ Artikelnummern pro Jahr */
 function initArtNrCounter(){
   const jahr = new Date().getFullYear();
   const key = "artnrCounter_" + jahr;
@@ -122,15 +145,14 @@ function initArtNrCounter(){
 
   let max = 0;
   artikel.forEach(a=>{
-    const match = a.artnr && a.artnr.match(/^(\d{3})-(\d{4})$/);
-    if(match && Number(match[2]) === jahr){
-      max = Math.max(max, Number(match[1]));
+    const m = a.artnr.match(/^(\d{3})-(\d{4})$/);
+    if(m && Number(m[2]) === jahr){
+      max = Math.max(max, Number(m[1]));
     }
   });
   localStorage.setItem(key, max);
 }
 
-/* ✅ nächste Artikelnummer erzeugen: 001-2025, 002-2025, … */
 function getNextArtNr(){
   const jahr = new Date().getFullYear();
   const key = "artnrCounter_" + jahr;
@@ -141,22 +163,20 @@ function getNextArtNr(){
 
 initArtNrCounter();
 
+/* TESTARTIKEL */
 if(artikel.length===0){
 artikel=[
-{artnr:"1001-2025",name:"Winterjacke",menge:2,groesse:"L",preis:59.99,ort:"Zara",datum:"2025-01-10",bild:"",notiz:"",markiert:false},
-{artnr:"1002-2025",name:"Sneaker",menge:1,groesse:"43",preis:89.90,ort:"Snipes",datum:"2025-02-03",bild:"",notiz:"",markiert:false},
-{artnr:"1003-2025",name:"Jeans",menge:3,groesse:"32/32",preis:39.95,ort:"H&M",datum:"2025-03-15",bild:"",notiz:"",markiert:false},
-{artnr:"1004-2025",name:"Hoodie",menge:1,groesse:"XL",preis:29.99,ort:"H&M",datum:"2025-04-01",bild:"",notiz:"",markiert:false},
-{artnr:"1005-2025",name:"Cap",menge:5,groesse:"One Size",preis:14.99,ort:"Footlocker",datum:"2025-05-20",bild:"",notiz:"",markiert:false}
+{artnr:"001-2025",name:"Winterjacke",menge:2,groesse:"L",preis:59.99,ort:"Zara",datum:"2025-01-10",bild:"",notiz:"",markiert:false},
+{artnr:"002-2025",name:"Sneaker",menge:1,groesse:"43",preis:89.90,ort:"Snipes",datum:"2025-02-03",bild:"",notiz:"",markiert:false},
+{artnr:"003-2025",name:"Jeans",menge:3,groesse:"32/32",preis:39.95,ort:"H&M",datum:"2025-03-15",bild:"",notiz:"",markiert:false},
+{artnr:"004-2025",name:"Hoodie",menge:1,groesse:"XL",preis:29.99,ort:"H&M",datum:"2025-04-01",bild:"",notiz:"",markiert:false},
+{artnr:"005-2025",name:"Cap",menge:5,groesse:"One Size",preis:14.99,ort:"Footlocker",datum:"2025-05-20",bild:"",notiz:"",markiert:false}
 ];
 localStorage.setItem("lagerData",JSON.stringify(artikel));
+localStorage.setItem("artnrCounter_2025","5");
 }
 
-function adjustTableTop(){
-document.getElementById("tableContainer").style.top =
-document.getElementById("topbar").offsetHeight + "px";
-}
-
+/* RENDER */
 function renderTable(){
 tableBody.innerHTML="";
 artikel.forEach((a,i)=>{
@@ -180,7 +200,6 @@ tr.innerHTML=`
 tableBody.appendChild(tr);
 });
 updateCounters();
-adjustTableTop();
 }
 
 function updateQty(i,val){
@@ -198,10 +217,9 @@ countWert.textContent=w.toFixed(2);
 countWertTotal.textContent=w.toFixed(2);
 }
 
-/* NEUER ARTIKEL – jetzt mit automatischer Artikelnummer */
 btnAdd.onclick=()=>{
 editIndex=-1;
-p_artnr.value = getNextArtNr();  // ✅ z.B. 001-2025
+p_artnr.value = getNextArtNr();
 p_name.value="";p_menge.value=1;
 p_groesse.value="";p_preis.value="";
 p_ort.value="";p_datum.value="";
@@ -281,13 +299,11 @@ viewPopup.style.display="block";
 }
 
 function viewNote(i){
-viewPopup.innerHTML=`<div>${a
-rtikel[i].notiz||"Keine Notiz"}</div>
+viewPopup.innerHTML=`<div>${artikel[i].notiz||"Keine Notiz"}</div>
 <br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
 viewPopup.style.display="block";
 }
 
-/* SICHERN */
 btnExport.onclick=()=>{
 const blob=new Blob([JSON.stringify(artikel)], {type:"application/json"});
 const a=document.createElement("a");
@@ -296,7 +312,6 @@ a.download="lager_sicherung.json";
 a.click();
 };
 
-/* LADEN */
 btnImport.onclick=()=>{
 const inp=document.createElement("input");
 inp.type="file";
@@ -314,7 +329,6 @@ r.readAsText(file);
 inp.click();
 };
 
-/* SUCHE */
 search.oninput=()=>{
 const q=search.value.toLowerCase();
 document.querySelectorAll("#tableBody tr").forEach(r=>{
@@ -322,7 +336,6 @@ r.style.display=r.innerText.toLowerCase().includes(q)?"":"none";
 });
 };
 
-/* PDF */
 btnPDF.onclick=()=>{
 let w=window.open("","_blank");
 let html=`<table border="1" cellpadding="4">
@@ -336,7 +349,6 @@ w.print();
 };
 
 renderTable();
-window.addEventListener("resize",adjustTableTop);
 </script>
 
 </body>

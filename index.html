@@ -5,134 +5,51 @@
 <meta name="viewport" content="width=device-width, user-scalable=no">
 <title>Lager App</title>
 
-<!-- PWA-Erweiterung (stört die App-Funktion nicht) -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#000000">
 
 <style>
 body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:hidden;}
 #topbar{position:fixed;top:0;left:0;right:0;padding:15px;background:#000;z-index:5000;border-bottom:2px solid #333;}
-
 #counterWrapper{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
 .counter-box{padding:10px;border:1px solid #444;border-radius:10px;background:#000;}
 .counter-title{font-size:11px;color:#bbb;}
 .counter-value{font-size:18px;font-weight:bold;}
-
 #searchRow{margin-top:10px;}
-#search{
-  width:100%;
-  padding:10px;
-  border-radius:8px;
-  background:#111;
-  border:1px solid #444;
-  color:white;
-  box-sizing:border-box;
-}
-
+#search{width:100%;padding:10px;border-radius:8px;background:#111;border:1px solid #444;color:white;box-sizing:border-box;}
 #buttonRow{margin-top:10px;display:flex;gap:8px;}
-#buttonRow button{
-  flex:1;padding:10px;font-size:11px;color:#bbb;
-  border-radius:10px;background:#000;border:1px solid #444;font-weight:bold;
-}
+#buttonRow button{flex:1;padding:10px;font-size:11px;color:#bbb;border-radius:10px;background:#000;border:1px solid #444;font-weight:bold;}
 
-/* Tabelle unter dem oberen Block, wie bei dir funktionierend */
 #tableContainer{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  top:0;
-  padding-top:230px;   /* Abstand für Zähler, Suche, Buttons */
-  overflow-y:auto;
-  overflow-x:auto;
-  background:#000;
-  z-index:100;
+  position:fixed;left:0;right:0;bottom:0;top:0;
+  padding-top:230px;
+  overflow-y:auto;overflow-x:auto;
+  background:#000;z-index:100;
 }
 
 table{width:100%;border-collapse:collapse;}
-th{
-  background:#111;
-  position:sticky;
-  top:0;
-  z-index:200;
-  padding:6px;
-  color:#bbb;
-  font-size:10px;
-  white-space:nowrap;
-}
-td{
-  padding:5px;
-  font-size:11px;
-  border-bottom:1px solid #222;
-  white-space:nowrap;
-}
+th{background:#111;position:sticky;top:0;z-index:200;padding:6px;color:#bbb;font-size:10px;white-space:nowrap;}
+td{padding:5px;font-size:11px;border-bottom:1px solid #222;white-space:nowrap;}
 .marked{background:#222;}
 
 .iconCell span{cursor:pointer;margin-right:8px;}
 .iconCell span.delete{margin-left:18px;}
-
-input.miniQty{
-  width:42px;
-  background:#111;
-  color:white;
-  border:1px solid #444;
-  border-radius:5px;
-  text-align:center;
-}
+input.miniQty{width:42px;background:#111;color:white;border:1px solid #444;border-radius:5px;text-align:center;}
 
 #popup,#viewPopup{
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  background:#111;
-  padding:16px;
-  border:2px solid #444;
-  border-radius:12px;
-  width:90%;
-  max-width:360px;
-  max-height:90vh;
-  overflow-y:auto;
-  display:none;
-  z-index:9999;
+position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+background:#111;padding:16px;border:2px solid #444;border-radius:12px;
+width:90%;max-width:360px;max-height:90vh;overflow-y:auto;display:none;z-index:9999;
 }
 
 .popup-row{margin-bottom:8px;}
-.popup-row label{
-  font-size:12px;
-  color:#bbb;
-  display:block;
-  margin-bottom:3px;
-}
-.popup-row input,.popup-row textarea{
-  width:100%;
-  padding:8px;
-  border-radius:8px;
-  border:1px solid #444;
-  background:#1a1a1a;
-  color:white;
-}
+.popup-row label{font-size:12px;color:#bbb;display:block;margin-bottom:3px;}
+.popup-row input,.popup-row textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #444;background:#1a1a1a;color:white;}
 
-#popupButtons{
-  display:flex;
-  gap:8px;
-  margin-top:10px;
-}
-#popupButtons button{
-  flex:1;
-  padding:11px;
-  border-radius:10px;
-  background:#000;
-  border:1px solid #444;
-  color:white;
-  font-weight:bold;
-}
+#popupButtons{display:flex;gap:8px;margin-top:10px;}
+#popupButtons button{flex:1;padding:11px;border-radius:10px;background:#000;border:1px solid #444;color:white;font-weight:bold;}
 
-img.preview{
-  max-width:100%;
-  border-radius:8px;
-  margin-top:10px;
-}
+img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 </style>
 </head>
 
@@ -140,27 +57,13 @@ img.preview{
 
 <div id="topbar">
   <div id="counterWrapper">
-    <div class="counter-box">
-      <div class="counter-title">Artikel im Bestand</div>
-      <div id="countArtikel">0</div>
-    </div>
-    <div class="counter-box">
-      <div class="counter-title">Gegenstände insgesamt</div>
-      <div id="countMenge">0</div>
-    </div>
-    <div class="counter-box">
-      <div class="counter-title">Warenwert aktuell (€)</div>
-      <div id="countWert">0</div>
-    </div>
-    <div class="counter-box">
-      <div class="counter-title">Warenwert gesamt (€)</div>
-      <div id="countWertTotal">0</div>
-    </div>
+    <div class="counter-box"><div class="counter-title">Artikel im Bestand</div><div id="countArtikel">0</div></div>
+    <div class="counter-box"><div class="counter-title">Gegenstände insgesamt</div><div id="countMenge">0</div></div>
+    <div class="counter-box"><div class="counter-title">Warenwert aktuell (€)</div><div id="countWert">0</div></div>
+    <div class="counter-box"><div class="counter-title">Warenwert gesamt (€)</div><div id="countWertTotal">0</div></div>
   </div>
 
-  <div id="searchRow">
-    <input id="search" placeholder="Suchen …">
-  </div>
+  <div id="searchRow"><input id="search" placeholder="Suchen …"></div>
 
   <div id="buttonRow">
     <button id="btnAdd">Artikel anlegen</button>
@@ -171,22 +74,16 @@ img.preview{
 </div>
 
 <div id="tableContainer">
-  <table>
-    <thead>
-      <tr>
-        <th>*</th>
-        <th>Nr</th>
-        <th>Name</th>
-        <th>Menge</th>
-        <th>Größe</th>
-        <th>Preis</th>
-        <th>Ort</th>
-        <th>Datum</th>
-        <th>Aktionen</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
+<table>
+<thead>
+<tr>
+<th>*</th><th>Nr</th><th>Name</th><th>Menge</th>
+<th>Größe</th><th>Einz.-Preis</th><th>Gesamt</th>
+<th>Ort</th><th>Datum</th><th>Aktionen</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
 </div>
 
 <div id="popup">
@@ -211,236 +108,139 @@ img.preview{
 let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let editIndex = -1;
 
-/* Artikelnummern pro Jahr */
-function initArtNrCounter(){
-  const jahr = new Date().getFullYear();
-  const key = "artnrCounter_" + jahr;
-  if(localStorage.getItem(key)) return;
-
-  let max = 0;
-  artikel.forEach(a=>{
-    if(!a.artnr) return;
-    const m = a.artnr.match(/^(\d{3})-(\d{4})$/);
-    if(m && Number(m[2]) === jahr){
-      max = Math.max(max, Number(m[1]));
-    }
-  });
-  localStorage.setItem(key, max);
-}
+/* ✅ ZÄHLER EXPLIZIT AUF 000-2025 ZURÜCKSETZEN */
+localStorage.setItem("artnrCounter_2025", "-1");
 
 function getNextArtNr(){
   const jahr = new Date().getFullYear();
   const key = "artnrCounter_" + jahr;
-  let counter = Number(localStorage.getItem(key) || 0) + 1;
+  let counter = Number(localStorage.getItem(key) || -1) + 1;
   localStorage.setItem(key, counter);
   return String(counter).padStart(3,"0") + "-" + jahr;
 }
 
-initArtNrCounter();
-
-/* TESTARTIKEL beim ersten Start */
-if(artikel.length===0){
-  artikel=[
-    {artnr:"001-2025",name:"Winterjacke",menge:2,groesse:"L",preis:59.99,ort:"Zara",datum:"2025-01-10",bild:"",notiz:"",markiert:false},
-    {artnr:"002-2025",name:"Sneaker",menge:1,groesse:"43",preis:89.90,ort:"Snipes",datum:"2025-02-03",bild:"",notiz:"",markiert:false},
-    {artnr:"003-2025",name:"Jeans",menge:3,groesse:"32/32",preis:39.95,ort:"H&M",datum:"2025-03-15",bild:"",notiz:"",markiert:false},
-    {artnr:"004-2025",name:"Hoodie",menge:1,groesse:"XL",preis:29.99,ort:"H&M",datum:"2025-04-01",bild:"",notiz:"",markiert:false},
-    {artnr:"005-2025",name:"Cap",menge:5,groesse:"One Size",preis:14.99,ort:"Footlocker",datum:"2025-05-20",bild:"",notiz:"",markiert:false}
-  ];
-  localStorage.setItem("lagerData",JSON.stringify(artikel));
-  localStorage.setItem("artnrCounter_2025","5");
+/* ✅ Datum in TT-MM-JJJJ umwandeln */
+function formatDate(d){
+  if(!d) return "";
+  const [y,m,dd] = d.split("-");
+  return `${dd}-${m}-${y}`;
 }
 
 function renderTable(){
-  tableBody.innerHTML="";
-  artikel.forEach((a,i)=>{
-    const tr=document.createElement("tr");
-    if(a.markiert)tr.classList.add("marked");
-    tr.innerHTML=`
-      <td onclick="toggleMark(${i})">${a.markiert?"⭐":"☆"}</td>
-      <td>${a.artnr}</td>
-      <td>${a.name}</td>
-      <td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
-      <td>${a.groesse}</td>
-      <td>${a.preis.toFixed(2)}</td>
-      <td>${a.ort}</td>
-      <td>${a.datum}</td>
-      <td class="iconCell">
-        <span onclick="viewImg(${i})">📷</span>
-        <span onclick="viewNote(${i})">📝</span>
-        <span onclick="editArtikel(${i})">✏️</span>
-        <span class="delete" onclick="del(${i})">🗑</span>
-      </td>`;
-    tableBody.appendChild(tr);
-  });
-  updateCounters();
+tableBody.innerHTML="";
+artikel.forEach((a,i)=>{
+const tr=document.createElement("tr");
+if(a.markiert)tr.classList.add("marked");
+const gesamt = (a.preis * a.menge).toFixed(2);
+tr.innerHTML=`
+<td onclick="toggleMark(${i})">${a.markiert?"⭐":"☆"}</td>
+<td>${a.artnr}</td>
+<td>${a.name}</td>
+<td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
+<td>${a.groesse}</td>
+<td>${a.preis.toFixed(2)}</td>
+<td>${gesamt}</td>
+<td>${a.ort}</td>
+<td>${formatDate(a.datum)}</td>
+<td class="iconCell">
+<span onclick="viewImg(${i})">📷</span>
+<span onclick="viewNote(${i})">📝</span>
+<span onclick="editArtikel(${i})">✏️</span>
+<span class="delete" onclick="del(${i})">🗑</span>
+</td>`;
+tableBody.appendChild(tr);
+});
+updateCounters();
 }
 
 function updateQty(i,val){
-  artikel[i].menge=parseInt(val)||0;
-  localStorage.setItem("lagerData",JSON.stringify(artikel));
-  updateCounters();
+artikel[i].menge=parseInt(val)||0;
+localStorage.setItem("lagerData",JSON.stringify(artikel));
+renderTable();
 }
 
 function updateCounters(){
-  countArtikel.textContent=artikel.length;
-  let m=0,w=0;
-  artikel.forEach(a=>{m+=a.menge;w+=a.menge*a.preis});
-  countMenge.textContent=m;
-  countWert.textContent=w.toFixed(2);
-  countWertTotal.textContent=w.toFixed(2);
+countArtikel.textContent=artikel.length;
+let m=0,w=0;
+artikel.forEach(a=>{m+=a.menge;w+=a.menge*a.preis});
+countMenge.textContent=m;
+countWert.textContent=w.toFixed(2);
+countWertTotal.textContent=w.toFixed(2);
 }
 
 btnAdd.onclick=()=>{
-  editIndex=-1;
-  p_artnr.value = getNextArtNr();
-  p_name.value="";
-  p_menge.value=1;
-  p_groesse.value="";
-  p_preis.value="";
-  p_ort.value="";
-  p_datum.value="";
-  p_bild.value="";
-  p_notiz.value="";
-  popup.style.display="block";
+editIndex=-1;
+p_artnr.value = getNextArtNr();
+p_name.value="";p_menge.value=1;p_groesse.value="";
+p_preis.value="";p_ort.value="";p_datum.value="";
+p_bild.value="";p_notiz.value="";
+popup.style.display="block";
 };
 
-btnCancel.onclick=()=>{
-  popup.style.display="none";
-  editIndex=-1;
-};
+btnCancel.onclick=()=>{popup.style.display="none";editIndex=-1;};
 
 btnSave.onclick=()=>{
-  const obj={
-    artnr:p_artnr.value,
-    name:p_name.value,
-    menge:+p_menge.value,
-    groesse:p_groesse.value,
-    preis:+p_preis.value,
-    ort:p_ort.value,
-    datum:p_datum.value,
-    notiz:p_notiz.value,
-    bild:"",
-    markiert:false
-  };
+const obj={
+artnr:p_artnr.value,name:p_name.value,menge:+p_menge.value,
+groesse:p_groesse.value,preis:+p_preis.value,ort:p_ort.value,
+datum:p_datum.value,notiz:p_notiz.value,bild:"",markiert:false
+};
 
-  if(p_bild.files[0]){
-    const r=new FileReader();
-    r.onload=e=>{obj.bild=e.target.result;push(obj);}
-    r.readAsDataURL(p_bild.files[0]);
-  }else{
-    push(obj);
-  }
+if(p_bild.files[0]){
+const r=new FileReader();
+r.onload=e=>{obj.bild=e.target.result;push(obj);}
+r.readAsDataURL(p_bild.files[0]);
+}else push(obj);
 };
 
 function push(obj){
-  if(editIndex>-1){
-    obj.markiert = artikel[editIndex].markiert;
-    artikel[editIndex]=obj;
-  }else{
-    artikel.push(obj);
-  }
-  localStorage.setItem("lagerData",JSON.stringify(artikel));
-  popup.style.display="none";
-  editIndex=-1;
-  renderTable();
+if(editIndex>-1){obj.markiert = artikel[editIndex].markiert;artikel[editIndex]=obj;}
+else artikel.push(obj);
+localStorage.setItem("lagerData",JSON.stringify(artikel));
+popup.style.display="none";editIndex=-1;renderTable();
 }
 
-function toggleMark(i){
-  artikel[i].markiert=!artikel[i].markiert;
-  localStorage.setItem("lagerData",JSON.stringify(artikel));
-  renderTable();
-}
-
-function del(i){
-  if(confirm("Wirklich löschen?")){
-    artikel.splice(i,1);
-    localStorage.setItem("lagerData",JSON.stringify(artikel));
-    renderTable();
-  }
-}
-
+function toggleMark(i){artikel[i].markiert=!artikel[i].markiert;renderTable();}
+function del(i){if(confirm("Wirklich löschen?")){artikel.splice(i,1);renderTable();}}
 function editArtikel(i){
-  editIndex=i;
-  const a=artikel[i];
-  p_artnr.value=a.artnr;
-  p_name.value=a.name;
-  p_menge.value=a.menge;
-  p_groesse.value=a.groesse;
-  p_preis.value=a.preis;
-  p_ort.value=a.ort;
-  p_datum.value=a.datum;
-  p_notiz.value=a.notiz;
-  popup.style.display="block";
+editIndex=i;const a=artikel[i];
+p_artnr.value=a.artnr;p_name.value=a.name;p_menge.value=a.menge;
+p_groesse.value=a.groesse;p_preis.value=a.preis;p_ort.value=a.ort;
+p_datum.value=a.datum;p_notiz.value=a.notiz;popup.style.display="block";
 }
 
 function viewImg(i){
-  const a=artikel[i];
-  viewPopup.innerHTML = a.bild
-    ? `<img class="preview" src="${a.bild}"><br><button onclick="viewPopup.style.display='none'">Schließen</button>`
-    : `<div>Kein Bild</div><br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
-  viewPopup.style.display="block";
+const a=artikel[i];
+viewPopup.innerHTML=a.bild?
+`<img class="preview" src="${a.bild}"><br><button onclick="viewPopup.style.display='none'">Schließen</button>`:
+`<div>Kein Bild</div><br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
+viewPopup.style.display="block";
 }
 
 function viewNote(i){
-  const a=artikel[i];
-  viewPopup.innerHTML = `<div>${a.notiz || "Keine Notiz"}</div>
-  <br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
-  viewPopup.style.display="block";
+viewPopup.innerHTML=`<div>${artikel[i].notiz||"Keine Notiz"}</div>
+<br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
+viewPopup.style.display="block";
 }
 
-/* Sichern */
-btnExport.onclick=()=>{
-  const blob=new Blob([JSON.stringify(artikel)], {type:"application/json"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="lager_sicherung.json";
-  a.click();
-};
-
-/* Laden */
+btnExport.onclick=()=>{const blob=new Blob([JSON.stringify(artikel)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="lager_sicherung.json";a.click();}
 btnImport.onclick=()=>{
-  const inp=document.createElement("input");
-  inp.type="file";
-  inp.accept="application/json";
-  inp.onchange=e=>{
-    const file=e.target.files[0];
-    const r=new FileReader();
-    r.onload=()=>{
-      artikel=JSON.parse(r.result);
-      localStorage.setItem("lagerData",JSON.stringify(artikel));
-      renderTable();
-    };
-    r.readAsText(file);
-  };
-  inp.click();
+const inp=document.createElement("input");inp.type="file";inp.accept="application/json";
+inp.onchange=e=>{const r=new FileReader();r.onload=()=>{artikel=JSON.parse(r.result);renderTable();};r.readAsText(e.target.files[0]);};inp.click();
 };
 
-/* Suche */
-search.oninput=()=>{
-  const q=search.value.toLowerCase();
-  document.querySelectorAll("#tableBody tr").forEach(r=>{
-    r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
-  });
-};
+search.oninput=()=>{const q=search.value.toLowerCase();document.querySelectorAll("#tableBody tr").forEach(r=>{r.style.display=r.innerText.toLowerCase().includes(q)?"":"none";});};
 
-/* PDF */
 btnPDF.onclick=()=>{
-  let w=window.open("","_blank");
-  let html=`<table border="1" cellpadding="4">
-  <tr><th>Nr</th><th>Name</th><th>Menge</th><th>Notiz</th></tr>`;
-  artikel.forEach(a=>{
-    html+=`<tr><td>${a.artnr}</td><td>${a.name}</td><td>${a.menge}</td><td></td></tr>`;
-  });
-  html+=`</table>`;
-  w.document.write(html);
-  w.print();
+let w=window.open("","_blank");
+let html=`<table border="1" cellpadding="4"><tr><th>Nr</th><th>Name</th><th>Menge</th><th>Notiz</th></tr>`;
+artikel.forEach(a=>{html+=`<tr><td>${a.artnr}</td><td>${a.name}</td><td>${a.menge}</td><td></td></tr>`;});
+html+=`</table>`;w.document.write(html);w.print();
 };
 
 renderTable();
 </script>
 
-<!-- Service Worker Registrierung – wenn sw.js fehlt, passiert einfach nichts -->
 <script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(()=>{});

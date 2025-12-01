@@ -1,55 +1,22 @@
-// sw.js – Service Worker für Offline-Betrieb
-
-const CACHE_NAME = "lager-cache-v1";
-const STATIC_ASSETS = [
-  "/",
-  "/index.html",
-  "/style.css",
-  "/app.js",
-  "/manifest.json",
-  "/icon-192.png",
-  "/icon-512.png"
+const CACHE_NAME = "lager-app-v1";
+const FILES_TO_CACHE = [
+  "./",
+  "./index.html",
+  "./manifest.json"
 ];
 
-// Install
-self.addEventListener("install", event => {
-  event.waitUntil(
+self.addEventListener("install", e => {
+  e.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(FILES_TO_CACHE);
     })
   );
-  self.skipWaiting();
 });
 
-// Activate
-self.addEventListener("activate", event => {
-  event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      );
-    })
-  );
-  self.clients.claim();
-});
-
-// Fetch
-self.addEventListener("fetch", event => {
-  event.respondWith(
-    caches.match(event.request).then(resp => {
-      return (
-        resp ||
-        fetch(event.request)
-          .then(networkResp => {
-            return caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, networkResp.clone());
-              return networkResp;
-            });
-          })
-          .catch(() => resp)
-      );
+self.addEventListener("fetch", e => {
+  e.respondWith(
+    caches.match(e.request).then(response => {
+      return response || fetch(e.request);
     })
   );
 });

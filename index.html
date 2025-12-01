@@ -14,7 +14,6 @@ body {
     overflow: hidden;
 }
 
-/* HEADER OBEN */
 #topbar {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -49,7 +48,6 @@ body {
     background: #111;
     border: 1px solid #444;
     color: white;
-    font-size: 12px;
     box-sizing: border-box;
 }
 
@@ -70,22 +68,18 @@ body {
     font-weight: bold;
 }
 
-/* TABELLE-BEREICH */
+/* TABELLE */
 #tableContainer {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     overflow-y: auto;
-    overflow-x: auto;           /* jetzt auch links/rechts scrollbar */
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
 
-/* TABELLE */
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
+table { width: 100%; border-collapse: collapse; }
 
 th {
     background: #111;
@@ -94,20 +88,19 @@ th {
     padding: 6px;
     color: #bbb;
     font-size: 10px;
-    font-weight: bold;
-    white-space: nowrap;        /* alles in einer Zeile */
+    white-space: nowrap;
 }
 
 td {
     padding: 5px;
     font-size: 11px;
     border-bottom: 1px solid #222;
-    white-space: nowrap;        /* alles in einer Zeile */
+    white-space: nowrap;
 }
 
 .marked { background: #222; }
 
-/* POPUP ARTIKEL */
+/* POPUP */
 #popup {
     position: fixed;
     top: 50%; left: 50%;
@@ -125,6 +118,13 @@ td {
 }
 
 .popup-row { margin-bottom: 10px; }
+
+.popup-row label {
+    font-size: 12px;
+    color: #bbb;
+    display: block;
+    margin-bottom: 3px;
+}
 
 .popup-row input,
 .popup-row textarea {
@@ -181,17 +181,8 @@ td {
 <table id="artikelTable">
 <thead>
 <tr>
-    <th>*</th>
-    <th>Nr</th>
-    <th>Name</th>
-    <th>Menge</th>
-    <th>Größe</th>
-    <th>Preis</th>
-    <th>Ort</th>
-    <th>Datum</th>
-    <th>Bild</th>
-    <th>Notiz</th>
-    <th>✏️</th>
+    <th>*</th><th>Nr</th><th>Name</th><th>Menge</th><th>Größe</th>
+    <th>Preis</th><th>Ort</th><th>Datum</th><th>Bild</th><th>Notiz</th><th>✏️</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
@@ -199,14 +190,14 @@ td {
 </div>
 
 <div id="popup">
-    <div class="popup-row"><input id="p_artnr" placeholder="Artikelnummer"></div>
-    <div class="popup-row"><input id="p_name" placeholder="Name"></div>
-    <div class="popup-row"><input type="number" id="p_menge" value="1"></div>
-    <div class="popup-row"><input id="p_groesse" placeholder="Größe"></div>
-    <div class="popup-row"><input type="number" id="p_preis" step="0.01"></div>
-    <div class="popup-row"><input id="p_ort" placeholder="Ort"></div>
-    <div class="popup-row"><input type="date" id="p_datum"></div>
-    <div class="popup-row"><textarea id="p_notiz" placeholder="Notiz"></textarea></div>
+    <div class="popup-row"><label>Artikelnummer</label><input id="p_artnr"></div>
+    <div class="popup-row"><label>Name</label><input id="p_name"></div>
+    <div class="popup-row"><label>Menge</label><input type="number" id="p_menge" value="1"></div>
+    <div class="popup-row"><label>Größe</label><input id="p_groesse"></div>
+    <div class="popup-row"><label>Preis (€)</label><input type="number" id="p_preis" step="0.01"></div>
+    <div class="popup-row"><label>Ort</label><input id="p_ort"></div>
+    <div class="popup-row"><label>Datum (TT-MM-JJJJ)</label><input type="date" id="p_datum"></div>
+    <div class="popup-row"><label>Notiz</label><textarea id="p_notiz"></textarea></div>
 
     <div id="popupButtons">
         <button onclick="saveArtikel()">Speichern</button>
@@ -218,7 +209,7 @@ td {
 let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let editIndex = -1;
 
-/* 10 Testartikel falls leer */
+/* 10 Testartikel */
 if (artikel.length === 0) {
   artikel = [
     {artnr:"1001",name:"Winterjacke",menge:2,groesse:"L",preis:59.99,ort:"Zara",datum:"2023-11-12",bild:"",notiz:"gefüttert",markiert:false},
@@ -235,111 +226,98 @@ if (artikel.length === 0) {
   localStorage.setItem("lagerData", JSON.stringify(artikel));
 }
 
-/* POPUP */
+function formatDatum(d){
+  if(!d) return "";
+  const [y,m,day] = d.split("-");
+  return `${day}-${m}-${y}`;
+}
+
 function openPopup(){
   editIndex = -1;
-  p_artnr.value = "";
-  p_name.value = "";
-  p_menge.value = 1;
-  p_groesse.value = "";
-  p_preis.value = 0;
-  p_ort.value = "";
-  p_datum.value = "";
-  p_notiz.value = "";
-  popup.style.display = "block";
+  p_artnr.value=p_name.value=p_groesse.value=p_ort.value=p_notiz.value="";
+  p_menge.value=1; p_preis.value=0; p_datum.value="";
+  popup.style.display="block";
 }
 
-function closePopup(){
-  popup.style.display = "none";
-  editIndex = -1;
-}
+function closePopup(){ popup.style.display="none"; editIndex=-1; }
 
-/* BEARBEITEN */
 function editArtikel(i){
   editIndex = i;
   const a = artikel[i];
-  p_artnr.value = a.artnr;
-  p_name.value = a.name;
-  p_menge.value = a.menge;
-  p_groesse.value = a.groesse;
-  p_preis.value = a.preis;
-  p_ort.value = a.ort;
-  p_datum.value = a.datum;
-  p_notiz.value = a.notiz;
-  popup.style.display = "block";
+  p_artnr.value=a.artnr;
+  p_name.value=a.name;
+  p_menge.value=a.menge;
+  p_groesse.value=a.groesse;
+  p_preis.value=a.preis;
+  p_ort.value=a.ort;
+  p_datum.value=a.datum;
+  p_notiz.value=a.notiz;
+  popup.style.display="block";
 }
 
-/* SPEICHERN */
 function saveArtikel(){
   const obj = {
-    artnr: p_artnr.value.trim(),
-    name: p_name.value.trim(),
-    menge: +p_menge.value,
-    groesse: p_groesse.value.trim(),
-    preis: +p_preis.value,
-    ort: p_ort.value.trim(),
-    datum: p_datum.value,
-    bild: "",
-    notiz: p_notiz.value.trim(),
+    artnr:p_artnr.value.trim(),
+    name:p_name.value.trim(),
+    menge:+p_menge.value,
+    groesse:p_groesse.value.trim(),
+    preis:+p_preis.value,
+    ort:p_ort.value.trim(),
+    datum:p_datum.value,
+    bild:"",
+    notiz:p_notiz.value.trim(),
     markiert: editIndex > -1 ? artikel[editIndex].markiert : false
   };
 
   if (!obj.artnr || !obj.name) return;
 
-  if (editIndex > -1) {
-    artikel[editIndex] = obj;
-  } else {
-    artikel.push(obj);
-  }
+  if (editIndex > -1) artikel[editIndex] = obj;
+  else artikel.push(obj);
 
   localStorage.setItem("lagerData", JSON.stringify(artikel));
-  popup.style.display = "none";
-  editIndex = -1;
+  popup.style.display="none";
+  editIndex=-1;
   renderTable();
   updateCounters();
 }
 
-/* TABELLE */
 function renderTable(){
-  tableBody.innerHTML = "";
+  tableBody.innerHTML="";
   artikel.forEach((a,i)=>{
-    const tr = document.createElement("tr");
+    const tr=document.createElement("tr");
     tr.className = a.markiert ? "marked" : "";
-    tr.innerHTML = `
-      <td onclick="toggleMark(${i})" style="cursor:pointer">${a.markiert ? "⭐" : "☆"}</td>
+    tr.innerHTML=`
+      <td onclick="toggleMark(${i})">${a.markiert?"⭐":"☆"}</td>
       <td>${a.artnr}</td>
       <td>${a.name}</td>
       <td>${a.menge}</td>
       <td>${a.groesse}</td>
       <td>${a.preis.toFixed(2)}</td>
       <td>${a.ort}</td>
-      <td>${a.datum}</td>
+      <td>${formatDatum(a.datum)}</td>
       <td>${a.bild ? "📷" : "-"}</td>
       <td>${a.notiz}</td>
-      <td onclick="editArtikel(${i})" style="cursor:pointer">✏️</td>
+      <td onclick="editArtikel(${i})">✏️</td>
     `;
     tableBody.appendChild(tr);
   });
 }
 
-/* MARKIEREN */
 function toggleMark(i){
-  artikel[i].markiert = !artikel[i].markiert;
+  artikel[i].markiert=!artikel[i].markiert;
   localStorage.setItem("lagerData", JSON.stringify(artikel));
   renderTable();
 }
 
-/* COUNTER */
 function updateCounters(){
   countArtikel.innerText = artikel.length;
-  let m = 0, w = 0;
-  artikel.forEach(a=>{ m += a.menge; w += a.menge * a.preis; });
+  let m=0,w=0;
+  artikel.forEach(a=>{ m+=a.menge; w+=a.menge*a.preis; });
   countMenge.innerText = m;
   countWert.innerText = w.toFixed(2);
   countWertTotal.innerText = w.toFixed(2);
 }
 
-/* SUCHE */
 function searchTable(){
   const q = search.value.toLowerCase();
   document.querySelectorAll("#artikelTable tbody tr").forEach(r=>{
@@ -347,45 +325,37 @@ function searchTable(){
   });
 }
 
-/* EXPORT / IMPORT / PDF (Stub) */
 function exportData(){
-  const b = new Blob([JSON.stringify(artikel)],{type:"application/json"});
+  const blob = new Blob([JSON.stringify(artikel)],{type:"application/json"});
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(b);
+  a.href = URL.createObjectURL(blob);
   a.download = "lager.json";
   a.click();
 }
 
 function importData(){
-  const i = document.createElement("input");
-  i.type = "file";
-  i.accept = "application/json";
-  i.onchange = e=>{
-    const r = new FileReader();
-    r.onload = ()=>{
+  const inp = document.createElement("input");
+  inp.type="file"; inp.accept="application/json";
+  inp.onchange=e=>{
+    const r=new FileReader();
+    r.onload=()=>{
       artikel = JSON.parse(r.result);
       localStorage.setItem("lagerData", JSON.stringify(artikel));
-      renderTable();
-      updateCounters();
+      renderTable(); updateCounters();
     };
     r.readAsText(e.target.files[0]);
   };
-  i.click();
+  inp.click();
 }
 
-function generatePDF(){ alert("PDF kommt später."); }
+function generatePDF(){ alert("PDF kommt als nächster Schritt."); }
 
-/* TABELLE GENAU UNTER HEADER */
 function adjustTableTop(){
-  const headerHeight = topbar.offsetHeight;
-  tableContainer.style.top = headerHeight + "px";
+  const h = topbar.offsetHeight;
+  tableContainer.style.top = h + "px";
 }
-window.onload = ()=>{
-  adjustTableTop();
-  renderTable();
-  updateCounters();
-};
-window.onresize = adjustTableTop;
+window.onload=()=>{ adjustTableTop(); renderTable(); updateCounters(); };
+window.onresize=adjustTableTop;
 </script>
 
 </body>

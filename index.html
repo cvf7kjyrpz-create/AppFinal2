@@ -14,6 +14,7 @@ body {
     overflow: hidden;
 }
 
+/* HEADER OBEN */
 #topbar {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -48,6 +49,8 @@ body {
     background: #111;
     border: 1px solid #444;
     color: white;
+    font-size: 12px;
+    box-sizing: border-box;
 }
 
 #buttonRow {
@@ -67,14 +70,18 @@ body {
     font-weight: bold;
 }
 
+/* TABELLE-BEREICH */
 #tableContainer {
-    position: absolute;
+    position: fixed;
     left: 0;
     right: 0;
+    bottom: 0;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;           /* jetzt auch links/rechts scrollbar */
+    -webkit-overflow-scrolling: touch;
 }
 
+/* TABELLE */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -87,16 +94,20 @@ th {
     padding: 6px;
     color: #bbb;
     font-size: 10px;
+    font-weight: bold;
+    white-space: nowrap;        /* alles in einer Zeile */
 }
 
 td {
     padding: 5px;
     font-size: 11px;
     border-bottom: 1px solid #222;
+    white-space: nowrap;        /* alles in einer Zeile */
 }
 
 .marked { background: #222; }
 
+/* POPUP ARTIKEL */
 #popup {
     position: fixed;
     top: 50%; left: 50%;
@@ -107,23 +118,33 @@ td {
     border-radius: 12px;
     width: 90%;
     max-width: 380px;
+    max-height: 85vh;
+    overflow-y: auto;
     display: none;
     z-index: 9999;
 }
 
 .popup-row { margin-bottom: 10px; }
 
-.popup-row input, .popup-row textarea {
+.popup-row input,
+.popup-row textarea {
     width: 100%;
     padding: 9px;
     border-radius: 8px;
     border: 1px solid #444;
     background: #1a1a1a;
     color: white;
+    box-sizing: border-box;
 }
 
-#popup button {
-    width: 100%;
+#popupButtons {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+#popupButtons button {
+    flex: 1;
     padding: 12px;
     border-radius: 10px;
     background: #000;
@@ -160,8 +181,17 @@ td {
 <table id="artikelTable">
 <thead>
 <tr>
-    <th>*</th><th>Nr</th><th>Name</th><th>Menge</th><th>Größe</th>
-    <th>Preis</th><th>Ort</th><th>Datum</th><th>Bild</th><th>Notiz</th><th>✏️</th>
+    <th>*</th>
+    <th>Nr</th>
+    <th>Name</th>
+    <th>Menge</th>
+    <th>Größe</th>
+    <th>Preis</th>
+    <th>Ort</th>
+    <th>Datum</th>
+    <th>Bild</th>
+    <th>Notiz</th>
+    <th>✏️</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
@@ -177,130 +207,186 @@ td {
     <div class="popup-row"><input id="p_ort" placeholder="Ort"></div>
     <div class="popup-row"><input type="date" id="p_datum"></div>
     <div class="popup-row"><textarea id="p_notiz" placeholder="Notiz"></textarea></div>
-    <button onclick="saveArtikel()">Speichern</button>
+
+    <div id="popupButtons">
+        <button onclick="saveArtikel()">Speichern</button>
+        <button onclick="closePopup()">Abbrechen</button>
+    </div>
 </div>
 
 <script>
 let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
-
 let editIndex = -1;
 
-function openPopup(){
-  editIndex = -1;
-  popup.style.display="block";
-  p_artnr.value=p_name.value=p_groesse.value=p_ort.value=p_notiz.value="";
-  p_menge.value=1; p_preis.value=0; p_datum.value="";
+/* 10 Testartikel falls leer */
+if (artikel.length === 0) {
+  artikel = [
+    {artnr:"1001",name:"Winterjacke",menge:2,groesse:"L",preis:59.99,ort:"Zara",datum:"2023-11-12",bild:"",notiz:"gefüttert",markiert:false},
+    {artnr:"1002",name:"Sneaker Black",menge:1,groesse:"43",preis:89.90,ort:"Snipes",datum:"2024-02-01",bild:"",notiz:"",markiert:false},
+    {artnr:"1003",name:"Jeans Blau",menge:3,groesse:"32/32",preis:39.95,ort:"H&M",datum:"2023-10-20",bild:"",notiz:"Stretch",markiert:false},
+    {artnr:"1004",name:"Hoodie Grau",menge:1,groesse:"XL",preis:29.99,ort:"H&M",datum:"2024-01-15",bild:"",notiz:"",markiert:false},
+    {artnr:"1005",name:"Kappe Schwarz",menge:5,groesse:"One Size",preis:14.99,ort:"Footlocker",datum:"2024-03-02",bild:"",notiz:"neu",markiert:false},
+    {artnr:"1006",name:"Socken 10er Pack",menge:10,groesse:"42-44",preis:12.99,ort:"Primark",datum:"2024-04-10",bild:"",notiz:"Baumwolle",markiert:false},
+    {artnr:"1007",name:"Handschuhe",menge:2,groesse:"L",preis:19.99,ort:"Decathlon",datum:"2023-12-03",bild:"",notiz:"Winter",markiert:false},
+    {artnr:"1008",name:"Rucksack",menge:1,groesse:"30L",preis:49.99,ort:"Amazon",datum:"2024-02-18",bild:"",notiz:"Laptopfach",markiert:false},
+    {artnr:"1009",name:"T-Shirt Weiß",menge:6,groesse:"L",preis:9.99,ort:"H&M",datum:"2024-01-10",bild:"",notiz:"Basic",markiert:false},
+    {artnr:"1010",name:"Sporthose",menge:2,groesse:"M",preis:24.99,ort:"Adidas",datum:"2024-03-20",bild:"",notiz:"atmungsaktiv",markiert:false}
+  ];
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
 }
 
+/* POPUP */
+function openPopup(){
+  editIndex = -1;
+  p_artnr.value = "";
+  p_name.value = "";
+  p_menge.value = 1;
+  p_groesse.value = "";
+  p_preis.value = 0;
+  p_ort.value = "";
+  p_datum.value = "";
+  p_notiz.value = "";
+  popup.style.display = "block";
+}
+
+function closePopup(){
+  popup.style.display = "none";
+  editIndex = -1;
+}
+
+/* BEARBEITEN */
 function editArtikel(i){
   editIndex = i;
   const a = artikel[i];
-  p_artnr.value=a.artnr;
-  p_name.value=a.name;
-  p_menge.value=a.menge;
-  p_groesse.value=a.groesse;
-  p_preis.value=a.preis;
-  p_ort.value=a.ort;
-  p_datum.value=a.datum;
-  p_notiz.value=a.notiz;
-  popup.style.display="block";
+  p_artnr.value = a.artnr;
+  p_name.value = a.name;
+  p_menge.value = a.menge;
+  p_groesse.value = a.groesse;
+  p_preis.value = a.preis;
+  p_ort.value = a.ort;
+  p_datum.value = a.datum;
+  p_notiz.value = a.notiz;
+  popup.style.display = "block";
 }
 
+/* SPEICHERN */
 function saveArtikel(){
-  const data={
-    artnr:p_artnr.value,
-    name:p_name.value,
-    menge:+p_menge.value,
-    groesse:p_groesse.value,
-    preis:+p_preis.value,
-    ort:p_ort.value,
-    datum:p_datum.value,
-    bild:"",
-    notiz:p_notiz.value,
-    markiert:editIndex>-1?artikel[editIndex].markiert:false
+  const obj = {
+    artnr: p_artnr.value.trim(),
+    name: p_name.value.trim(),
+    menge: +p_menge.value,
+    groesse: p_groesse.value.trim(),
+    preis: +p_preis.value,
+    ort: p_ort.value.trim(),
+    datum: p_datum.value,
+    bild: "",
+    notiz: p_notiz.value.trim(),
+    markiert: editIndex > -1 ? artikel[editIndex].markiert : false
   };
 
-  if(editIndex>-1) artikel[editIndex]=data;
-  else artikel.push(data);
+  if (!obj.artnr || !obj.name) return;
+
+  if (editIndex > -1) {
+    artikel[editIndex] = obj;
+  } else {
+    artikel.push(obj);
+  }
 
   localStorage.setItem("lagerData", JSON.stringify(artikel));
-  popup.style.display="none";
+  popup.style.display = "none";
+  editIndex = -1;
   renderTable();
   updateCounters();
 }
 
+/* TABELLE */
 function renderTable(){
-  tableBody.innerHTML="";
+  tableBody.innerHTML = "";
   artikel.forEach((a,i)=>{
-    const tr=document.createElement("tr");
-    tr.className=a.markiert?"marked":"";
-    tr.innerHTML=`
-      <td onclick="toggleMark(${i})">${a.markiert?"⭐":"☆"}</td>
-      <td>${a.artnr}</td><td>${a.name}</td><td>${a.menge}</td>
-      <td>${a.groesse}</td><td>${a.preis.toFixed(2)}</td>
-      <td>${a.ort}</td><td>${a.datum}</td><td>-</td><td>${a.notiz}</td>
-      <td onclick="editArtikel(${i})">✏️</td>
+    const tr = document.createElement("tr");
+    tr.className = a.markiert ? "marked" : "";
+    tr.innerHTML = `
+      <td onclick="toggleMark(${i})" style="cursor:pointer">${a.markiert ? "⭐" : "☆"}</td>
+      <td>${a.artnr}</td>
+      <td>${a.name}</td>
+      <td>${a.menge}</td>
+      <td>${a.groesse}</td>
+      <td>${a.preis.toFixed(2)}</td>
+      <td>${a.ort}</td>
+      <td>${a.datum}</td>
+      <td>${a.bild ? "📷" : "-"}</td>
+      <td>${a.notiz}</td>
+      <td onclick="editArtikel(${i})" style="cursor:pointer">✏️</td>
     `;
     tableBody.appendChild(tr);
   });
 }
 
+/* MARKIEREN */
 function toggleMark(i){
-  artikel[i].markiert=!artikel[i].markiert;
+  artikel[i].markiert = !artikel[i].markiert;
   localStorage.setItem("lagerData", JSON.stringify(artikel));
   renderTable();
 }
 
+/* COUNTER */
 function updateCounters(){
-  countArtikel.innerText=artikel.length;
-  let m=0,w=0;
-  artikel.forEach(a=>{m+=a.menge; w+=a.menge*a.preis;});
-  countMenge.innerText=m;
-  countWert.innerText=w.toFixed(2);
-  countWertTotal.innerText=w.toFixed(2);
+  countArtikel.innerText = artikel.length;
+  let m = 0, w = 0;
+  artikel.forEach(a=>{ m += a.menge; w += a.menge * a.preis; });
+  countMenge.innerText = m;
+  countWert.innerText = w.toFixed(2);
+  countWertTotal.innerText = w.toFixed(2);
 }
 
+/* SUCHE */
 function searchTable(){
-  const q=search.value.toLowerCase();
+  const q = search.value.toLowerCase();
   document.querySelectorAll("#artikelTable tbody tr").forEach(r=>{
-    r.style.display=r.innerText.toLowerCase().includes(q)?"":"none";
+    r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
   });
 }
 
+/* EXPORT / IMPORT / PDF (Stub) */
 function exportData(){
-  const b=new Blob([JSON.stringify(artikel)],{type:"application/json"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(b);
-  a.download="lager.json";
+  const b = new Blob([JSON.stringify(artikel)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(b);
+  a.download = "lager.json";
   a.click();
 }
 
 function importData(){
-  const i=document.createElement("input");
-  i.type="file"; i.accept="application/json";
-  i.onchange=e=>{
-    const r=new FileReader();
-    r.onload=()=>{artikel=JSON.parse(r.result); localStorage.setItem("lagerData",JSON.stringify(artikel)); renderTable(); updateCounters();};
+  const i = document.createElement("input");
+  i.type = "file";
+  i.accept = "application/json";
+  i.onchange = e=>{
+    const r = new FileReader();
+    r.onload = ()=>{
+      artikel = JSON.parse(r.result);
+      localStorage.setItem("lagerData", JSON.stringify(artikel));
+      renderTable();
+      updateCounters();
+    };
     r.readAsText(e.target.files[0]);
   };
   i.click();
 }
 
-function generatePDF(){ alert("PDF kommt im nächsten Schritt."); }
+function generatePDF(){ alert("PDF kommt später."); }
 
-/* ✅ WICHTIGER FIX: Tabelle korrekt unter Header positionieren */
+/* TABELLE GENAU UNTER HEADER */
 function adjustTableTop(){
-  const h = topbar.offsetHeight;
-  tableContainer.style.top = h + "px";
-  tableContainer.style.height = "calc(100vh - " + h + "px)";
+  const headerHeight = topbar.offsetHeight;
+  tableContainer.style.top = headerHeight + "px";
 }
-
-window.onload=()=>{
+window.onload = ()=>{
   adjustTableTop();
   renderTable();
   updateCounters();
 };
-window.onresize=adjustTableTop;
+window.onresize = adjustTableTop;
 </script>
+
 </body>
 </html>

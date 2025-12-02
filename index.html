@@ -14,22 +14,29 @@ body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:
 .counter-value{font-size:18px;font-weight:bold;}
 #searchRow{margin-top:10px;}
 #search{width:100%;padding:10px;border-radius:8px;background:#111;border:1px solid #444;color:white;box-sizing:border-box;}
-#buttonRow{margin-top:10px;display:flex;gap:8px;}
+#buttonRow{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;}
 #buttonRow button{flex:1;padding:10px;font-size:11px;color:#bbb;border-radius:10px;background:#000;border:1px solid #444;font-weight:bold;}
 
 #tableContainer{
-  position:fixed;left:0;right:0;bottom:0;
-  overflow-y:auto;overflow-x:auto;
-  background:#000;z-index:100;
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  overflow-y:auto;
+  overflow-x:auto;
+  background:#000;
+  z-index:100;
 }
 
 table{width:100%;border-collapse:collapse;}
 th{background:#111;position:sticky;top:0;z-index:200;padding:6px;color:#bbb;font-size:10px;white-space:nowrap;}
 td{padding:5px;font-size:11px;border-bottom:1px solid #222;white-space:nowrap;}
-.iconCell span{cursor:pointer;margin-right:10px;}
-.iconCell span.delete{margin-left:20px;}
+.marked{background:#222;}
+.iconCell span{cursor:pointer;margin-right:8px;}
+.iconCell span.delete{margin-left:18px;}
+input.miniQty{width:42px;background:#111;color:white;border:1px solid #444;border-radius:5px;text-align:center;}
 
-#popup,#viewPopup{
+#popup,#viewPopup,#salePopup,#salesHistoryPopup{
 position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
 background:#111;padding:16px;border:2px solid #444;border-radius:12px;
 width:90%;max-width:360px;max-height:90vh;overflow-y:auto;display:none;z-index:9999;
@@ -40,12 +47,15 @@ width:90%;max-width:360px;max-height:90vh;overflow-y:auto;display:none;z-index:9
 width:100%;padding:8px;border-radius:8px;
 border:1px solid #444;background:#1a1a1a;color:white;
 }
-#popupButtons{display:flex;gap:8px;margin-top:10px;}
-#popupButtons button{
+#popupButtons,#saleButtons{display:flex;gap:8px;margin-top:10px;}
+#popupButtons button,#saleButtons button{
 flex:1;padding:11px;border-radius:10px;
 background:#000;border:1px solid #444;color:white;font-weight:bold;
 }
 img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
+#salesHistoryPopup h3{margin-top:0;font-size:16px;}
+#salesHistoryPopup table{width:100%;border-collapse:collapse;font-size:11px;}
+#salesHistoryPopup th,#salesHistoryPopup td{border:1px solid #444;padding:4px;white-space:nowrap;}
 </style>
 </head>
 
@@ -53,10 +63,30 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 
 <div id="topbar">
   <div id="counterWrapper">
-    <div class="counter-box"><div class="counter-title">Artikel im Bestand</div><div id="countArtikel">0</div></div>
-    <div class="counter-box"><div class="counter-title">Gegenstände insgesamt</div><div id="countMenge">0</div></div>
-    <div class="counter-box"><div class="counter-title">Warenwert aktuell (€)</div><div id="countWert">0</div></div>
-    <div class="counter-box"><div class="counter-title">Warenwert gesamt (€)</div><div id="countWertTotal">0</div></div>
+    <div class="counter-box">
+      <div class="counter-title">Artikel im Bestand</div>
+      <div id="countArtikel" class="counter-value">0</div>
+    </div>
+    <div class="counter-box">
+      <div class="counter-title">Gegenstände insgesamt</div>
+      <div id="countMenge" class="counter-value">0</div>
+    </div>
+    <div class="counter-box">
+      <div class="counter-title">Warenwert aktuell (€)</div>
+      <div id="countWert" class="counter-value">0</div>
+    </div>
+    <div class="counter-box">
+      <div class="counter-title">Warenwert gesamt (€)</div>
+      <div id="countWertTotal" class="counter-value">0</div>
+    </div>
+    <div class="counter-box">
+      <div class="counter-title">Umsatz Jahr (€)</div>
+      <div id="countUmsatzJahr" class="counter-value">0</div>
+    </div>
+    <div class="counter-box">
+      <div class="counter-title">Gewinn gesamt (€)</div>
+      <div id="countGewinn" class="counter-value">0</div>
+    </div>
   </div>
 
   <div id="searchRow"><input id="search" placeholder="Suchen …"></div>
@@ -66,6 +96,7 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
     <button id="btnExport">Sichern</button>
     <button id="btnImport">Laden</button>
     <button id="btnPDF">PDF</button>
+    <button id="btnSales">Verkäufe</button>
   </div>
 </div>
 
@@ -73,224 +104,576 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 <table>
 <thead>
 <tr>
-<th>Nr</th><th>Name</th><th>Menge</th>
-<th>Größe</th><th>Preis</th><th>Ort</th>
-<th>Datum</th><th>Aktionen</th>
+<th>*</th><th>Nr</th><th>Name</th><th>Menge</th>
+<th>Größe</th><th>Einz.</th><th>Gesamt</th>
+<th>Ort</th><th>Datum</th><th>Aktionen</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
 </table>
 </div>
 
+<!-- Artikel-Popup -->
 <div id="popup">
   <div class="popup-row"><label>Artikelnummer</label><input id="p_artnr"></div>
   <div class="popup-row"><label>Name</label><input id="p_name"></div>
   <div class="popup-row"><label>Menge</label><input type="number" id="p_menge" value="1"></div>
   <div class="popup-row"><label>Größe</label><input id="p_groesse"></div>
-  <div class="popup-row"><label>Preis</label><input type="number" id="p_preis"></div>
+  <div class="popup-row"><label>Preis (Einkauf, pro Stück)</label><input type="number" id="p_preis" step="0.01"></div>
   <div class="popup-row"><label>Ort</label><input id="p_ort"></div>
   <div class="popup-row"><label>Datum</label><input type="date" id="p_datum"></div>
-  <div class="popup-row"><label>Bild</label><input type="file" id="p_bild" accept="image/*"></div>
-
+  <div class="popup-row"><label>Bild</label><input type="file" id="p_bild"></div>
+  <div class="popup-row"><label>Notiz</label><textarea id="p_notiz"></textarea></div>
   <div id="popupButtons">
     <button id="btnSave">Speichern</button>
     <button id="btnCancel">Abbrechen</button>
   </div>
 </div>
 
+<!-- Bild / Notiz Anzeige -->
 <div id="viewPopup"></div>
 
+<!-- Verkaufs-Popup -->
+<div id="salePopup">
+  <div class="popup-row"><label>Verkaufte Menge</label><input type="number" id="s_menge" min="1"></div>
+  <div class="popup-row"><label>Verkaufspreis pro Stück (€)</label><input type="number" id="s_preis" step="0.01"></div>
+  <div class="popup-row"><label>Versand vom Kunden (€)</label><input type="number" id="s_versandKunde" step="0.01"></div>
+  <div class="popup-row"><label>Eigene Versandkosten (€)</label><input type="number" id="s_versandKosten" step="0.01"></div>
+  <div class="popup-row"><label>Verkaufsdatum</label><input type="date" id="s_datum"></div>
+  <div id="saleButtons">
+    <button id="btnSaleOk">Verkaufen</button>
+    <button id="btnSaleCancel">Abbrechen</button>
+  </div>
+</div>
+
+<!-- Verkaufs-Historie -->
+<div id="salesHistoryPopup">
+  <h3>Verkäufe</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Datum</th>
+        <th>Nr</th>
+        <th>Name</th>
+        <th>Menge</th>
+        <th>Umsatz</th>
+        <th>Gewinn</th>
+        <th>Aktion</th>
+      </tr>
+    </thead>
+    <tbody id="salesBody"></tbody>
+  </table>
+  <div style="margin-top:10px;text-align:right;">
+    <button onclick="closeSalesHistory()">Schließen</button>
+  </div>
+</div>
+
 <script>
-/* =========================
-   INDEXEDDB FÜR BILDER
-========================= */
-let db;
-const request = indexedDB.open("lagerImages",1);
-request.onupgradeneeded = e => {
-  db = e.target.result;
-  db.createObjectStore("images",{keyPath:"id"});
-};
-request.onsuccess = e => db = e.target.result;
-
-/* =========================
-   ARTIKEL-DATEN (LEERER START)
-========================= */
 let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
+let sales   = JSON.parse(localStorage.getItem("lagerSales") || "[]");
+let editIndex = -1;
+let currentSaleIndex = -1;
 
-/* =========================
-   TABLE + COUNTER
-========================= */
-function renderTable(){
-  tableBody.innerHTML="";
-  let menge=0, wert=0;
+/* ===== Artikelnummern-Logik ===== */
 
+function initArtNrCounter(){
+  const jahr = new Date().getFullYear();
+  const key  = "artnrCounter_" + jahr;
+
+  if (localStorage.getItem(key) !== null) return;
+
+  let max = -1;
   artikel.forEach(a=>{
-    menge+=a.menge;
-    wert+=a.menge*a.preis;
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td>${a.artnr}</td>
-      <td>${a.name}</td>
-      <td>${a.menge}</td>
-      <td>${a.groesse}</td>
-      <td>${a.preis.toFixed(2)}</td>
-      <td>${a.ort}</td>
-      <td>${a.datum}</td>
-      <td class="iconCell">
-        <span onclick="viewImg('${a.artnr}')">📷</span>
-        <span class="delete" onclick="del('${a.artnr}')">🗑</span>
-      </td>`;
-    tableBody.appendChild(tr);
+    if(!a.artnr) return;
+    const m = a.artnr.match(/^(\d{3})-(\d{4})$/);
+    if(m && Number(m[2]) === jahr){
+      max = Math.max(max, Number(m[1]));
+    }
   });
 
-  countArtikel.textContent=artikel.length;
-  countMenge.textContent=menge;
-  countWert.textContent=wert.toFixed(2);
-  countWertTotal.textContent=wert.toFixed(2);
+  localStorage.setItem(key, max);
+}
+
+function previewNextArtNr(){
+  const jahr = new Date().getFullYear();
+  const key  = "artnrCounter_" + jahr;
+  const val  = Number(localStorage.getItem(key) || -1) + 1;
+  return String(val).padStart(3,"0") + "-" + jahr;
+}
+
+function commitNextArtNr(){
+  const jahr = new Date().getFullYear();
+  const key  = "artnrCounter_" + jahr;
+  let counter = Number(localStorage.getItem(key) || -1) + 1;
+  localStorage.setItem(key, counter);
+  return String(counter).padStart(3,"0") + "-" + jahr;
+}
+
+initArtNrCounter();
+
+/* ===== Layout: Tabelle direkt unter Header ===== */
+
+function adjustTableTop(){
+  const header = document.getElementById("topbar");
+  const tableC = document.getElementById("tableContainer");
+  tableC.style.top = header.offsetHeight + "px";
+}
+window.addEventListener("load", adjustTableTop);
+window.addEventListener("resize", adjustTableTop);
+
+/* ===== Datum formatieren (TT-MM-JJJJ) ===== */
+
+function formatDate(d){
+  if(!d) return "";
+  const [y,m,dd] = d.split("-");
+  return `${dd}-${m}-${y}`;
+}
+
+/* ===== Rendern Lager-Tabelle ===== */
+
+function renderTable(){
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
+
+  artikel.forEach((a,i)=>{
+    if(!a || a.menge <= 0) return; // nur Artikel mit Bestand anzeigen
+
+    const tr = document.createElement("tr");
+    if(a.markiert) tr.classList.add("marked");
+    const gesamt = (a.preis * a.menge).toFixed(2);
+
+    tr.innerHTML = `
+      <td onclick="toggleMark(${i})">${a.markiert ? "⭐" : "☆"}</td>
+      <td>${a.artnr || ""}</td>
+      <td>${a.name || ""}</td>
+      <td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
+      <td>${a.groesse || ""}</td>
+      <td>${isNaN(a.preis) ? "" : a.preis.toFixed(2)}</td>
+      <td>${isNaN(a.preis) ? "" : gesamt}</td>
+      <td>${a.ort || ""}</td>
+      <td>${a.datum ? formatDate(a.datum) : ""}</td>
+      <td class="iconCell">
+        <span onclick="viewImg(${i})">📷</span>
+        <span onclick="viewNote(${i})">📝</span>
+        <span onclick="editArtikel(${i})">✏️</span>
+        <span onclick="sellArtikel(${i})">🛒</span>
+        <span class="delete" onclick="del(${i})">🗑</span>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  updateCounters();
   adjustTableTop();
 }
 
-/* =========================
-   TABELLE POSITIONIEREN
-========================= */
-function adjustTableTop(){
-  tableContainer.style.top=
-  topbar.offsetHeight+"px";
-}
-window.onload=adjustTableTop;
-window.onresize=adjustTableTop;
+/* ===== Zähler ===== */
 
-/* =========================
-   POPUP
-========================= */
-btnAdd.onclick=()=>{
-  p_artnr.value="";
-  p_name.value="";
-  p_menge.value=1;
-  p_groesse.value="";
-  p_preis.value="";
-  p_ort.value="";
-  p_datum.value="";
-  p_bild.value="";
-  popup.style.display="block";
+function updateCounters(){
+  let m = 0;
+  let w = 0;
+  artikel.forEach(a=>{
+    m += a.menge || 0;
+    w += (a.menge || 0) * (a.preis || 0);
+  });
+  document.getElementById("countArtikel").textContent   = artikel.filter(a=>a && a.menge>0).length;
+  document.getElementById("countMenge").textContent     = m;
+  document.getElementById("countWert").textContent      = w.toFixed(2);
+  document.getElementById("countWertTotal").textContent = w.toFixed(2);
+
+  // Umsatz & Gewinn aus Verkäufen
+  let umsatzGes = 0;
+  let gewinnGes = 0;
+  let umsatzJahr = 0;
+  const currentYear = new Date().getFullYear();
+
+  sales.forEach(s=>{
+    const u = s.umsatz || 0;
+    const g = s.gewinn || 0;
+    umsatzGes += u;
+    gewinnGes += g;
+    if(s.datum){
+      const year = parseInt(s.datum.slice(0,4),10);
+      if(year === currentYear) umsatzJahr += u;
+    }
+  });
+
+  const umsatzElm = document.getElementById("countUmsatzJahr");
+  const gewinnElm = document.getElementById("countGewinn");
+
+  umsatzElm.textContent = umsatzJahr.toFixed(2);
+  gewinnElm.textContent = gewinnGes.toFixed(2);
+
+  // Warnfarben für 25.000-Grenze
+  umsatzElm.style.color = "#bbb";
+  if(umsatzJahr >= 25000){
+    umsatzElm.style.color = "#ff4d4d"; // rot
+  }else if(umsatzJahr >= 22000){
+    umsatzElm.style.color = "#ffae42"; // orange
+  }
+}
+
+/* ===== Menge direkt in Tabelle ===== */
+
+function updateQty(i,val){
+  artikel[i].menge = parseInt(val) || 0;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  renderTable();
+}
+
+/* ===== Markieren (⭐) ===== */
+
+function toggleMark(i){
+  artikel[i].markiert = !artikel[i].markiert;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  renderTable();
+}
+
+/* ===== Pop-up Logik (Neu + Bearbeiten) ===== */
+
+const btnAdd    = document.getElementById("btnAdd");
+const btnSave   = document.getElementById("btnSave");
+const btnCancel = document.getElementById("btnCancel");
+const popup     = document.getElementById("popup");
+
+btnAdd.onclick = () => {
+  editIndex = -1;
+  p_artnr.value       = previewNextArtNr(); // Vorschau
+  p_name.value        = "";
+  p_menge.value       = 1;
+  p_groesse.value     = "";
+  p_preis.value       = "";
+  p_ort.value         = "";
+  p_datum.value       = "";
+  p_bild.value        = "";
+  p_notiz.value       = "";
+  popup.style.display = "block";
 };
 
-btnCancel.onclick=()=>popup.style.display="none";
+btnCancel.onclick = () => {
+  popup.style.display = "none";
+  editIndex = -1;
+};
 
-/* =========================
-   SPEICHERN (MIT INDEXEDDB)
-========================= */
-btnSave.onclick=()=>{
-  const obj={
-    artnr:p_artnr.value.trim(),
-    name:p_name.value.trim(),
-    menge:+p_menge.value,
-    groesse:p_groesse.value,
-    preis:+p_preis.value,
-    ort:p_ort.value,
-    datum:p_datum.value
-  };
+btnSave.onclick = () => {
+  if (editIndex === -1){
+    // neuer Artikel
+    const nextNr     = commitNextArtNr();
+    const artnrInput = p_artnr.value.trim();
+    const artnrFinal = artnrInput || nextNr;
 
-  artikel.push(obj);
-  localStorage.setItem("lagerData",JSON.stringify(artikel));
-
-  const file=p_bild.files[0];
-  if(file){
-    const r=new FileReader();
-    r.onload=e=>{
-      const tx=db.transaction("images","readwrite");
-      const store=tx.objectStore("images");
-      store.put({id:obj.artnr,img:e.target.result});
+    const obj = {
+      artnr:  artnrFinal,
+      name:   p_name.value.trim(),
+      menge: +p_menge.value || 0,
+      groesse:p_groesse.value.trim(),
+      preis: +p_preis.value || 0,
+      ort:    p_ort.value.trim(),
+      datum:  p_datum.value,
+      notiz:  p_notiz.value.trim(),
+      bild:   "",
+      markiert:false
     };
-    r.readAsDataURL(file);
+
+    const file = p_bild.files[0];
+    if(file){
+      const r = new FileReader();
+      r.onload = e => { obj.bild = e.target.result; pushNew(obj); };
+      r.readAsDataURL(file);
+    } else {
+      pushNew(obj);
+    }
+
+  } else {
+    // Bearbeiten
+    const alt = artikel[editIndex];
+    const artnrInput = p_artnr.value.trim();
+    const obj = {
+      artnr:  artnrInput || alt.artnr,
+      name:   p_name.value.trim(),
+      menge: +p_menge.value || 0,
+      groesse:p_groesse.value.trim(),
+      preis: +p_preis.value || 0,
+      ort:    p_ort.value.trim(),
+      datum:  p_datum.value,
+      notiz:  p_notiz.value.trim(),
+      bild:   alt.bild || "",
+      markiert: alt.markiert || false
+    };
+
+    const file = p_bild.files[0];
+    if(file){
+      const r = new FileReader();
+      r.onload = e => { obj.bild = e.target.result; applyEdit(obj); };
+      r.readAsDataURL(file);
+    } else {
+      applyEdit(obj);
+    }
+  }
+};
+
+function pushNew(obj){
+  artikel.push(obj);
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  popup.style.display = "none";
+  editIndex = -1;
+  renderTable();
+}
+
+function applyEdit(obj){
+  artikel[editIndex] = obj;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  popup.style.display = "none";
+  editIndex = -1;
+  renderTable();
+}
+
+function editArtikel(i){
+  editIndex       = i;
+  const a         = artikel[i];
+  p_artnr.value   = a.artnr || "";
+  p_name.value    = a.name || "";
+  p_menge.value   = a.menge || 1;
+  p_groesse.value = a.groesse || "";
+  p_preis.value   = a.preis || 0;
+  p_ort.value     = a.ort || "";
+  p_datum.value   = a.datum || "";
+  p_bild.value    = "";
+  p_notiz.value   = a.notiz || "";
+  popup.style.display = "block";
+}
+
+/* ===== Löschen, Bild, Notiz ===== */
+
+const viewPopup = document.getElementById("viewPopup");
+
+function del(i){
+  if(confirm("Wirklich löschen?")){
+    artikel.splice(i,1);
+    localStorage.setItem("lagerData", JSON.stringify(artikel));
+    renderTable();
+  }
+}
+
+function viewImg(i){
+  const a = artikel[i];
+  viewPopup.innerHTML = a.bild
+    ? `<img class="preview" src="${a.bild}"><br><button onclick="viewPopup.style.display='none'">Schließen</button>`
+    : `<div>Kein Bild</div><br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
+  viewPopup.style.display = "block";
+}
+
+function viewNote(i){
+  const a = artikel[i];
+  viewPopup.innerHTML = `<div>${a.notiz || "Keine Notiz"}</div>
+  <br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
+  viewPopup.style.display = "block";
+}
+
+/* ===== Verkaufen (Teilmenge möglich) ===== */
+
+const salePopup      = document.getElementById("salePopup");
+const btnSaleOk      = document.getElementById("btnSaleOk");
+const btnSaleCancel  = document.getElementById("btnSaleCancel");
+const s_menge        = document.getElementById("s_menge");
+const s_preis        = document.getElementById("s_preis");
+const s_versandKunde = document.getElementById("s_versandKunde");
+const s_versandKosten= document.getElementById("s_versandKosten");
+const s_datum        = document.getElementById("s_datum");
+
+function sellArtikel(i){
+  currentSaleIndex = i;
+  const a = artikel[i];
+  s_menge.value        = a.menge || 1;
+  s_preis.value        = "";
+  s_versandKunde.value = "";
+  s_versandKosten.value= "";
+  s_datum.value        = new Date().toISOString().slice(0,10);
+  salePopup.style.display = "block";
+}
+
+btnSaleCancel.onclick = () => {
+  salePopup.style.display = "none";
+  currentSaleIndex = -1;
+};
+
+btnSaleOk.onclick = () => {
+  if(currentSaleIndex === -1) return;
+  const a = artikel[currentSaleIndex];
+
+  const mengeV = parseInt(s_menge.value) || 0;
+  const preisV = parseFloat(s_preis.value) || 0;
+  const versK  = parseFloat(s_versandKunde.value) || 0;
+  const versC  = parseFloat(s_versandKosten.value) || 0;
+  const datV   = s_datum.value;
+
+  if(mengeV <= 0 || mengeV > a.menge){
+    alert("Verkaufte Menge ist ungültig.");
+    return;
   }
 
-  popup.style.display="none";
+  const umsatz = mengeV * preisV + versK;
+  const einkaufKosten = mengeV * (a.preis || 0);
+  const gewinn = umsatz - einkaufKosten - versC;
+
+  const sale = {
+    artnr: a.artnr,
+    name:  a.name,
+    menge: mengeV,
+    verkaufPreis: preisV,
+    versandKunde: versK,
+    versandKosten: versC,
+    einkaufPreis: a.preis || 0,
+    datum: datV,
+    umsatz,
+    gewinn
+  };
+
+  sales.push(sale);
+  localStorage.setItem("lagerSales", JSON.stringify(sales));
+
+  // Bestand anpassen
+  a.menge -= mengeV;
+  if(a.menge < 0) a.menge = 0;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+
+  salePopup.style.display = "none";
+  currentSaleIndex = -1;
   renderTable();
+}
+
+/* ===== Verkäufe-Historie ===== */
+
+const salesHistoryPopup = document.getElementById("salesHistoryPopup");
+const salesBody         = document.getElementById("salesBody");
+const btnSales          = document.getElementById("btnSales");
+
+btnSales.onclick = () => {
+  openSalesHistory();
 };
 
-/* =========================
-   BILD ANZEIGEN
-========================= */
-function viewImg(id){
-  const tx=db.transaction("images","readonly");
-  const store=tx.objectStore("images");
-  const r=store.get(id);
-  r.onsuccess=()=>{
-    viewPopup.innerHTML=r.result?
-    `<img class="preview" src="${r.result.img}">
-    <br><button onclick="viewPopup.style.display='none'">Schließen</button>`:
-    `Kein Bild vorhanden<br><button onclick="viewPopup.style.display='none'">Schließen</button>`;
-    viewPopup.style.display="block";
-  };
+function openSalesHistory(){
+  salesBody.innerHTML = "";
+  sales.forEach((s,idx)=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${s.datum ? formatDate(s.datum) : ""}</td>
+      <td>${s.artnr || ""}</td>
+      <td>${s.name || ""}</td>
+      <td>${s.menge || 0}</td>
+      <td>${(s.umsatz||0).toFixed(2)}</td>
+      <td>${(s.gewinn||0).toFixed(2)}</td>
+      <td><button onclick="stornoSale(${idx})">⤴️ Storno</button></td>
+    `;
+    salesBody.appendChild(tr);
+  });
+  salesHistoryPopup.style.display = "block";
 }
 
-/* =========================
-   LÖSCHEN
-========================= */
-function del(id){
-  if(!confirm("Wirklich löschen?"))return;
+function closeSalesHistory(){
+  salesHistoryPopup.style.display = "none";
+}
 
-  artikel=artikel.filter(a=>a.artnr!==id);
-  localStorage.setItem("lagerData",JSON.stringify(artikel));
+/* Storno: Verkauf rückgängig */
+function stornoSale(index){
+  const s = sales[index];
+  if(!s) return;
+  if(!confirm("Verkauf stornieren und Bestand wieder erhöhen?")) return;
 
-  const tx=db.transaction("images","readwrite");
-  tx.objectStore("images").delete(id);
+  // passenden Artikel suchen (nach Artikelnummer)
+  const art = artikel.find(a => a.artnr === s.artnr);
+  if(art){
+    art.menge = (art.menge || 0) + (s.menge || 0);
+  }else{
+    // falls Artikel nicht mehr existiert, neu anlegen als einfacher Datensatz
+    artikel.push({
+      artnr: s.artnr,
+      name: s.name,
+      menge: s.menge || 0,
+      groesse:"",
+      preis: s.einkaufPreis || 0,
+      ort:"",
+      datum:s.datum || "",
+      notiz:"Storno automatisch angelegt",
+      bild:"",
+      markiert:false
+    });
+  }
 
+  // Verkauf aus Historie entfernen
+  sales.splice(index,1);
+  localStorage.setItem("lagerSales", JSON.stringify(sales));
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+
+  openSalesHistory(); // neu aufbauen
   renderTable();
 }
 
-/* =========================
-   SICHERN / LADEN
-========================= */
-btnExport.onclick=()=>{
-  const blob=new Blob([JSON.stringify(artikel)],{type:"application/json"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="lager.json";
+/* ===== Sichern / Laden / PDF / Suche ===== */
+
+const btnExport = document.getElementById("btnExport");
+const btnImport = document.getElementById("btnImport");
+const btnPDF    = document.getElementById("btnPDF");
+const searchInp = document.getElementById("search");
+
+btnExport.onclick = () => {
+  const data = { artikel, sales };
+  const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
+  const a    = document.createElement("a");
+  a.href     = URL.createObjectURL(blob);
+  a.download = "lager_sicherung.json";
   a.click();
 };
 
-btnImport.onclick=()=>{
-  const inp=document.createElement("input");
-  inp.type="file";
-  inp.accept="application/json";
-  inp.onchange=e=>{
-    const r=new FileReader();
-    r.onload=()=>{
-      artikel=JSON.parse(r.result);
-      localStorage.setItem("lagerData",JSON.stringify(artikel));
+btnImport.onclick = () => {
+  const inp = document.createElement("input");
+  inp.type  = "file";
+  inp.accept= "application/json";
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try{
+        const data = JSON.parse(r.result);
+        artikel = data.artikel || [];
+        sales   = data.sales   || [];
+      }catch{
+        // alte Sicherung (nur Artikel)
+        artikel = JSON.parse(r.result);
+        sales   = [];
+      }
+      localStorage.setItem("lagerData", JSON.stringify(artikel));
+      localStorage.setItem("lagerSales", JSON.stringify(sales));
+      initArtNrCounter();
       renderTable();
     };
-    r.readAsText(e.target.files[0]);
+    r.readAsText(file);
   };
   inp.click();
 };
 
-/* =========================
-   PDF
-========================= */
-btnPDF.onclick=()=>{
-  let w=window.open("","_blank");
-  let html="<table border='1'><tr><th>Nr</th><th>Name</th><th>Menge</th></tr>";
+btnPDF.onclick = () => {
+  let w = window.open("","_blank");
+  let html = `<table border="1" cellpadding="4">
+  <tr><th>Nr</th><th>Name</th><th>Menge</th><th>Notiz</th></tr>`;
   artikel.forEach(a=>{
-    html+=`<tr><td>${a.artnr}</td><td>${a.name}</td><td>${a.menge}</td></tr>`;
+    if(!a || a.menge <= 0) return;
+    html += `<tr><td>${a.artnr||""}</td><td>${a.name||""}</td><td>${a.menge||0}</td><td>${a.notiz||""}</td></tr>`;
   });
-  html+="</table>";
+  html += `</table>`;
   w.document.write(html);
   w.print();
 };
 
-/* =========================
-   SUCHE
-========================= */
-search.oninput=()=>{
-  const q=search.value.toLowerCase();
+searchInp.oninput = () => {
+  const q = searchInp.value.toLowerCase();
   document.querySelectorAll("#tableBody tr").forEach(r=>{
-    r.style.display=r.innerText.toLowerCase().includes(q)?"":"none";
+    r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
   });
 };
 
+/* ===== Start ===== */
 renderTable();
 </script>
 

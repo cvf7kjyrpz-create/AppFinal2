@@ -50,7 +50,7 @@ border:1px solid #444;background:#1a1a1a;color:white;
 #popupButtons{display:flex;gap:8px;margin-top:10px;}
 #popupButtons button{
 flex:1;padding:11px;border-radius:10px;
-background:#000;border:1px solid:#444;color:white;font-weight:bold;
+background:#000;border:1px solid #444;color:white;font-weight:bold;
 }
 img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 </style>
@@ -128,7 +128,6 @@ function initArtNrCounter(){
     }
   });
 
-  // wenn noch keine Artikel: bei -1 starten => erster wird 000-YYYY
   localStorage.setItem(key, max);
 }
 
@@ -191,6 +190,7 @@ function renderTable(){
       <td class="iconCell">
         <span onclick="viewImg(${i})">📷</span>
         <span onclick="viewNote(${i})">📝</span>
+        <span onclick="editArtikel(${i})">✏️</span>
         <span class="delete" onclick="del(${i})">🗑</span>
       </td>
     `;
@@ -232,7 +232,7 @@ function toggleMark(i){
   renderTable();
 }
 
-/* ===== Pop-up Logik ===== */
+/* ===== Pop-up Logik (Neu + Bearbeiten) ===== */
 
 const btnAdd    = document.getElementById("btnAdd");
 const btnSave   = document.getElementById("btnSave");
@@ -241,16 +241,16 @@ const popup     = document.getElementById("popup");
 
 btnAdd.onclick = () => {
   editIndex = -1;
-  document.getElementById("p_artnr").value   = previewNextArtNr(); // nur Vorschau, kein Zählschritt
-  document.getElementById("p_name").value    = "";
-  document.getElementById("p_menge").value   = 1;
-  document.getElementById("p_groesse").value = "";
-  document.getElementById("p_preis").value   = "";
-  document.getElementById("p_ort").value     = "";
-  document.getElementById("p_datum").value   = "";
-  document.getElementById("p_bild").value    = "";
-  document.getElementById("p_notiz").value   = "";
-  popup.style.display = "block";
+  p_artnr.value           = previewNextArtNr(); // nur Vorschau
+  p_name.value            = "";
+  p_menge.value           = 1;
+  p_groesse.value         = "";
+  p_preis.value           = "";
+  p_ort.value             = "";
+  p_datum.value           = "";
+  p_bild.value            = "";
+  p_notiz.value           = "";
+  popup.style.display     = "block";
 };
 
 btnCancel.onclick = () => {
@@ -261,24 +261,24 @@ btnCancel.onclick = () => {
 btnSave.onclick = () => {
   if (editIndex === -1){
     // neuer Artikel => Artikelnummer wirklich verbrauchen
-    const nextNr = commitNextArtNr();
-    const artnrInput = document.getElementById("p_artnr").value.trim();
-    const artnr = artnrInput || nextNr;
+    const nextNr     = commitNextArtNr();
+    const artnrInput = p_artnr.value.trim();
+    const artnrFinal = artnrInput || nextNr;
 
     const obj = {
-      artnr,
-      name:   document.getElementById("p_name").value.trim(),
-      menge: +document.getElementById("p_menge").value || 0,
-      groesse:document.getElementById("p_groesse").value.trim(),
-      preis: +document.getElementById("p_preis").value || 0,
-      ort:    document.getElementById("p_ort").value.trim(),
-      datum:  document.getElementById("p_datum").value,
-      notiz:  document.getElementById("p_notiz").value.trim(),
+      artnr:  artnrFinal,
+      name:   p_name.value.trim(),
+      menge: +p_menge.value || 0,
+      groesse:p_groesse.value.trim(),
+      preis: +p_preis.value || 0,
+      ort:    p_ort.value.trim(),
+      datum:  p_datum.value,
+      notiz:  p_notiz.value.trim(),
       bild:   "",
       markiert:false
     };
 
-    const file = document.getElementById("p_bild").files[0];
+    const file = p_bild.files[0];
     if(file){
       const r = new FileReader();
       r.onload = e => { obj.bild = e.target.result; pushNew(obj); };
@@ -288,23 +288,23 @@ btnSave.onclick = () => {
     }
 
   } else {
-    // Bearbeiten: Artikelnummer nicht antasten, nur übernehmen
-    const a    = artikel[editIndex];
-    const artnrInput = document.getElementById("p_artnr").value.trim();
+    // Bearbeiten: bestehender Artikel
+    const alt = artikel[editIndex];
+    const artnrInput = p_artnr.value.trim();
     const obj = {
-      artnr:  artnrInput || a.artnr,
-      name:   document.getElementById("p_name").value.trim(),
-      menge: +document.getElementById("p_menge").value || 0,
-      groesse:document.getElementById("p_groesse").value.trim(),
-      preis: +document.getElementById("p_preis").value || 0,
-      ort:    document.getElementById("p_ort").value.trim(),
-      datum:  document.getElementById("p_datum").value,
-      notiz:  document.getElementById("p_notiz").value.trim(),
-      bild:   a.bild || "",
-      markiert:a.markiert || false
+      artnr:  artnrInput || alt.artnr,
+      name:   p_name.value.trim(),
+      menge: +p_menge.value || 0,
+      groesse:p_groesse.value.trim(),
+      preis: +p_preis.value || 0,
+      ort:    p_ort.value.trim(),
+      datum:  p_datum.value,
+      notiz:  p_notiz.value.trim(),
+      bild:   alt.bild || "",
+      markiert: alt.markiert || false
     };
 
-    const file = document.getElementById("p_bild").files[0];
+    const file = p_bild.files[0];
     if(file){
       const r = new FileReader();
       r.onload = e => { obj.bild = e.target.result; applyEdit(obj); };
@@ -331,7 +331,26 @@ function applyEdit(obj){
   renderTable();
 }
 
+/* ===== Bearbeiten-Icon ===== */
+
+function editArtikel(i){
+  editIndex           = i;
+  const a             = artikel[i];
+  p_artnr.value       = a.artnr || "";
+  p_name.value        = a.name || "";
+  p_menge.value       = a.menge || 1;
+  p_groesse.value     = a.groesse || "";
+  p_preis.value       = a.preis || 0;
+  p_ort.value         = a.ort || "";
+  p_datum.value       = a.datum || "";
+  p_bild.value        = "";
+  p_notiz.value       = a.notiz || "";
+  popup.style.display = "block";
+}
+
 /* ===== Löschen, Bild, Notiz ===== */
+
+const viewPopup = document.getElementById("viewPopup");
 
 function del(i){
   if(confirm("Wirklich löschen?")){
@@ -340,8 +359,6 @@ function del(i){
     renderTable();
   }
 }
-
-const viewPopup = document.getElementById("viewPopup");
 
 function viewImg(i){
   const a = artikel[i];

@@ -43,7 +43,7 @@ width:90%;max-width:360px;max-height:90vh;overflow-y:auto;display:none;z-index:9
 }
 .popup-row{margin-bottom:8px;}
 .popup-row label{font-size:12px;color:#bbb;display:block;margin-bottom:3px;}
-.popup-row input,.popup-row textarea{
+.popup-row input,.popup-row textarea,.popup-row select{
 width:100%;padding:8px;border-radius:8px;
 border:1px solid #444;background:#1a1a1a;color:white;
 }
@@ -104,9 +104,17 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 <table>
 <thead>
 <tr>
-<th>*</th><th>Nr</th><th>Name</th><th>Menge</th>
-<th>Größe</th><th>Einz.</th><th>Gesamt</th>
-<th>Ort</th><th>Datum</th><th>Aktionen</th>
+  <th>*</th>
+  <th>Nr</th>
+  <th>Name</th>
+  <th>Zustand</th>
+  <th>Menge</th>
+  <th>Größe</th>
+  <th>Einz.</th>
+  <th>Gesamt</th>
+  <th>Ort</th>
+  <th>Datum</th>
+  <th>Aktionen</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
@@ -122,6 +130,13 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
   <div class="popup-row"><label>Preis (Einkauf, pro Stück)</label><input type="number" id="p_preis" step="0.01"></div>
   <div class="popup-row"><label>Ort</label><input id="p_ort"></div>
   <div class="popup-row"><label>Datum</label><input type="date" id="p_datum"></div>
+  <div class="popup-row">
+    <label>Zustand</label>
+    <select id="p_zustand">
+      <option value="Neu">Neu</option>
+      <option value="Gebraucht">Gebraucht</option>
+    </select>
+  </div>
   <div class="popup-row"><label>Bild</label><input type="file" id="p_bild"></div>
   <div class="popup-row"><label>Notiz</label><textarea id="p_notiz"></textarea></div>
   <div id="popupButtons">
@@ -229,6 +244,18 @@ function formatDate(d){
   return `${dd}-${m}-${y}`;
 }
 
+/* ===== Auto-Backup (wie "Sichern") ===== */
+
+function autoBackup(reason){
+  const data = { artikel, sales };
+  const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
+  const a    = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+  a.href     = URL.createObjectURL(blob);
+  a.download = "lager_backup_"+(reason||"aktion")+"_"+stamp+".json";
+  a.click();
+}
+
 /* ===== Rendern Lager-Tabelle ===== */
 
 function renderTable(){
@@ -246,6 +273,7 @@ function renderTable(){
       <td onclick="toggleMark(${i})">${a.markiert ? "⭐" : "☆"}</td>
       <td>${a.artnr || ""}</td>
       <td>${a.name || ""}</td>
+      <td>${a.zustand || ""}</td>
       <td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
       <td>${a.groesse || ""}</td>
       <td>${isNaN(a.preis) ? "" : a.preis.toFixed(2)}</td>
@@ -316,6 +344,7 @@ function updateCounters(){
 /* ===== Menge direkt in Tabelle ===== */
 
 function updateQty(i,val){
+  autoBackup("menge");
   artikel[i].menge = parseInt(val) || 0;
   localStorage.setItem("lagerData", JSON.stringify(artikel));
   renderTable();
@@ -324,6 +353,7 @@ function updateQty(i,val){
 /* ===== Markieren (⭐) ===== */
 
 function toggleMark(i){
+  autoBackup("markierung");
   artikel[i].markiert = !artikel[i].markiert;
   localStorage.setItem("lagerData", JSON.stringify(artikel));
   renderTable();
@@ -345,6 +375,7 @@ btnAdd.onclick = () => {
   p_preis.value       = "";
   p_ort.value         = "";
   p_datum.value       = "";
+  p_zustand.value     = "Neu";
   p_bild.value        = "";
   p_notiz.value       = "";
   popup.style.display = "block";
@@ -356,6 +387,7 @@ btnCancel.onclick = () => {
 };
 
 btnSave.onclick = () => {
+  autoBackup("speichern");
   if (editIndex === -1){
     // neuer Artikel
     const nextNr     = commitNextArtNr();
@@ -370,6 +402,7 @@ btnSave.onclick = () => {
       preis: +p_preis.value || 0,
       ort:    p_ort.value.trim(),
       datum:  p_datum.value,
+      zustand:p_zustand.value || "Neu",
       notiz:  p_notiz.value.trim(),
       bild:   "",
       markiert:false
@@ -396,6 +429,7 @@ btnSave.onclick = () => {
       preis: +p_preis.value || 0,
       ort:    p_ort.value.trim(),
       datum:  p_datum.value,
+      zustand:p_zustand.value || alt.zustand || "Neu",
       notiz:  p_notiz.value.trim(),
       bild:   alt.bild || "",
       markiert: alt.markiert || false
@@ -438,6 +472,7 @@ function editArtikel(i){
   p_preis.value   = a.preis || 0;
   p_ort.value     = a.ort || "";
   p_datum.value   = a.datum || "";
+  p_zustand.value = a.zustand || "Neu";
   p_bild.value    = "";
   p_notiz.value   = a.notiz || "";
   popup.style.display = "block";
@@ -449,6 +484,7 @@ const viewPopup = document.getElementById("viewPopup");
 
 function del(i){
   if(confirm("Wirklich löschen?")){
+    autoBackup("löschen");
     artikel.splice(i,1);
     localStorage.setItem("lagerData", JSON.stringify(artikel));
     renderTable();
@@ -499,6 +535,7 @@ btnSaleCancel.onclick = () => {
 
 btnSaleOk.onclick = () => {
   if(currentSaleIndex === -1) return;
+  autoBackup("verkauf");
   const a = artikel[currentSaleIndex];
 
   const mengeV = parseInt(s_menge.value) || 0;
@@ -580,6 +617,8 @@ function stornoSale(index){
   if(!s) return;
   if(!confirm("Verkauf stornieren und Bestand wieder erhöhen?")) return;
 
+  autoBackup("storno");
+
   // passenden Artikel suchen (nach Artikelnummer)
   const art = artikel.find(a => a.artnr === s.artnr);
   if(art){
@@ -594,6 +633,7 @@ function stornoSale(index){
       preis: s.einkaufPreis || 0,
       ort:"",
       datum:s.datum || "",
+      zustand:"Neu",
       notiz:"Storno automatisch angelegt",
       bild:"",
       markiert:false
@@ -617,12 +657,7 @@ const btnPDF    = document.getElementById("btnPDF");
 const searchInp = document.getElementById("search");
 
 btnExport.onclick = () => {
-  const data = { artikel, sales };
-  const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
-  const a    = document.createElement("a");
-  a.href     = URL.createObjectURL(blob);
-  a.download = "lager_sicherung.json";
-  a.click();
+  autoBackup("manuell");
 };
 
 btnImport.onclick = () => {

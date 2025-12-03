@@ -23,7 +23,7 @@ body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:
   right:0;
   bottom:0;
   overflow-y:auto;
-  overflow-x:auto;
+  overflow-x:hidden;
   background:#000;
   z-index:100;
 }
@@ -39,7 +39,7 @@ input.miniQty{width:42px;background:#111;color:white;border:1px solid #444;borde
 #popup,#viewPopup,#salePopup,#salesHistoryPopup{
 position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
 background:#111;padding:16px;border:2px solid #444;border-radius:12px;
-width:90%;max-width:360px;max-height:90vh;overflow-y:auto;display:none;z-index:9999;
+width:360px;max-width:92vw;overflow:hidden;display:none;z-index:9999;
 }
 .popup-row{margin-bottom:8px;}
 .popup-row label{font-size:12px;color:#bbb;display:block;margin-bottom:3px;}
@@ -664,27 +664,45 @@ btnImport.onclick = () => {
   const inp = document.createElement("input");
   inp.type  = "file";
   inp.accept= "application/json";
+
   inp.onchange = e => {
     const file = e.target.files[0];
     if(!file) return;
+
     const r = new FileReader();
     r.onload = () => {
       try{
         const data = JSON.parse(r.result);
-        artikel = data.artikel || [];
-        sales   = data.sales   || [];
+
+        if(data.artikel && Array.isArray(data.artikel)){
+          artikel = data.artikel;
+          sales   = data.sales || [];
+        }
+        else if(Array.isArray(data)){
+          artikel = data;
+          sales   = [];
+        }
+        else{
+          alert("Unbekanntes Dateiformat!");
+          return;
+        }
+
+        localStorage.setItem("lagerData", JSON.stringify(artikel));
+        localStorage.setItem("lagerSales", JSON.stringify(sales));
+
+        initArtNrCounter();
+        renderTable();
+
+        alert("Daten erfolgreich geladen ✔");
+
       }catch{
-        // alte Sicherung (nur Artikel)
-        artikel = JSON.parse(r.result);
-        sales   = [];
+        alert("Datei konnte nicht gelesen werden!");
       }
-      localStorage.setItem("lagerData", JSON.stringify(artikel));
-      localStorage.setItem("lagerSales", JSON.stringify(sales));
-      initArtNrCounter();
-      renderTable();
     };
+
     r.readAsText(file);
   };
+
   inp.click();
 };
 

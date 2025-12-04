@@ -115,7 +115,15 @@ td:nth-child(3){
   font-size:12px;
 }
 
+
+/* ✅ Kompaktere Schrift für die gesamte Tabelle */
+table td,
+table th{
+  font-size:10px !important;
+  font-weight:400 !important;
+}
 </style>
+
 </head>
 
 <body>
@@ -305,7 +313,8 @@ function formatDate(d){
 
 /* ===== Auto-Backup (wie "Sichern") ===== */
 
-function autoBackup(reason){
+function // autoBackup disabled (nur manueller Save erlaubt)
+// autoBackup(reason){
   const data = { artikel, sales };
   const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
   const a    = document.createElement("a");
@@ -324,7 +333,7 @@ function renderTable(){
     if(!a || a.menge <= 0) return; // nur Artikel mit Bestand anzeigen
 
     const tr = document.createElement("tr");
-    if(a.markiert) tr.classList.add("marked");
+    if(a.markiert) tr.classList.add("marked"); if(typeof selectedRowIndex !== 'undefined' && i === selectedRowIndex) tr.classList.add("selectedRow");
     const gesamt = (a.preis * a.menge).toFixed(2);
 
     tr.innerHTML = `
@@ -402,7 +411,8 @@ function updateCounters(){
 /* ===== Menge direkt in Tabelle ===== */
 
 function updateQty(i,val){
-  autoBackup("menge");
+  // autoBackup disabled (nur manueller Save erlaubt)
+// autoBackup("menge");
   artikel[i].menge = parseInt(val) || 0;
   localStorage.setItem("lagerData", JSON.stringify(artikel));
   renderTable();
@@ -411,12 +421,11 @@ function updateQty(i,val){
 /* ===== Markieren (⭐) ===== */
 
 function toggleMark(i){
-  autoBackup("markierung");
-
-  // Wenn derselbe Artikel erneut geklickt wird → Markierung löschen
-  if(artikel[i].markiert){
-    artikel.forEach(a => a.markiert = false);
-  } else {
+  // ✅ Stern nur lokal setzen – KEIN Backup, KEIN Datei-Download
+  artikel[i].markiert = !artikel[i].markiert;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  renderTable();
+} else {
     // Alle anderen Markierungen entfernen
     artikel.forEach(a => a.markiert = false);
     artikel[i].markiert = true;
@@ -454,7 +463,8 @@ btnCancel.onclick = () => {
 };
 
 btnSave.onclick = () => {
-  autoBackup("speichern");
+  // autoBackup disabled (nur manueller Save erlaubt)
+// autoBackup("speichern");
   if (editIndex === -1){
     // neuer Artikel
     const nextNr     = commitNextArtNr();
@@ -551,7 +561,8 @@ const viewPopup = document.getElementById("viewPopup");
 
 function del(i){
   if(confirm("Wirklich löschen?")){
-    autoBackup("löschen");
+    // autoBackup disabled (nur manueller Save erlaubt)
+// autoBackup("löschen");
     artikel.splice(i,1);
     localStorage.setItem("lagerData", JSON.stringify(artikel));
     renderTable();
@@ -602,7 +613,8 @@ btnSaleCancel.onclick = () => {
 
 btnSaleOk.onclick = () => {
   if(currentSaleIndex === -1) return;
-  autoBackup("verkauf");
+  // autoBackup disabled (nur manueller Save erlaubt)
+// autoBackup("verkauf");
   const a = artikel[currentSaleIndex];
 
   const mengeV = parseInt(s_menge.value) || 0;
@@ -684,7 +696,8 @@ function stornoSale(index){
   if(!s) return;
   if(!confirm("Verkauf stornieren und Bestand wieder erhöhen?")) return;
 
-  autoBackup("storno");
+  // autoBackup disabled (nur manueller Save erlaubt)
+// autoBackup("storno");
 
   // passenden Artikel suchen (nach Artikelnummer)
   const art = artikel.find(a => a.artnr === s.artnr);
@@ -724,7 +737,8 @@ const btnPDF    = document.getElementById("btnPDF");
 const searchInp = document.getElementById("search");
 
 btnExport.onclick = () => {
-  autoBackup("manuell");
+  // autoBackup disabled (nur manueller Save erlaubt)
+// autoBackup("manuell");
 };
 
 btnImport.onclick = () => {
@@ -795,7 +809,19 @@ searchInp.oninput = () => {
 
 /* ===== Start ===== */
 renderTable();
+
+// ✅ Nur visuelle blaue Auswahl – niemals speichern
+let selectedRowIndex = -1;
+function selectRow(i){
+  if(selectedRowIndex === i){
+    selectedRowIndex = -1;
+  } else {
+    selectedRowIndex = i;
+  }
+  renderTable();
+}
 </script>
+
 
 
 <script>
@@ -825,7 +851,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+// ✅ Nur visuelle blaue Auswahl – niemals speichern
+let selectedRowIndex = -1;
+function selectRow(i){
+  if(selectedRowIndex === i){
+    selectedRowIndex = -1;
+  } else {
+    selectedRowIndex = i;
+  }
+  renderTable();
+}
 </script>
+
 
 </body>
 </html>

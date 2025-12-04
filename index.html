@@ -115,6 +115,19 @@ td:nth-child(3){
   font-size:12px;
 }
 
+
+/* ✅ Nr & Artikel jetzt wirklich gleich groß & größer */
+td:nth-child(2),
+td:nth-child(3){
+  font-size:13px !important;
+  font-weight:600;
+}
+
+/* ✅ Separate blaue Auswahl (unabhängig vom Stern, ohne Speicherung) */
+.selectedRow{
+  background:#0b2a4a !important;
+}
+
 </style>
 </head>
 
@@ -247,6 +260,7 @@ let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let sales   = JSON.parse(localStorage.getItem("lagerSales") || "[]");
 let editIndex = -1;
 let currentSaleIndex = -1;
+let selectedRowIndex = -1; // ✅ nur visuelle Markierung, keine Sicherung
 
 /* ===== Artikelnummern-Logik ===== */
 
@@ -325,12 +339,13 @@ function renderTable(){
 
     const tr = document.createElement("tr");
     if(a.markiert) tr.classList.add("marked");
+    if(i === selectedRowIndex) tr.classList.add("selectedRow");
     const gesamt = (a.preis * a.menge).toFixed(2);
 
     tr.innerHTML = `
       <td onclick="toggleMark(${i})">${a.markiert ? "⭐" : "☆"}</td>
       <td>${a.artnr || ""}</td>
-      <td onclick="toggleMark(${i})" style="cursor:pointer;">${a.name || ""}</td>
+      <td onclick="selectRow(${i})" style="cursor:pointer;">${a.name || ""}</td>
       <td>${a.zustand || ""}</td>
       <td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
       <td>${a.groesse || ""}</td>
@@ -412,11 +427,10 @@ function updateQty(i,val){
 
 function toggleMark(i){
   autoBackup("markierung");
-
-  // Wenn derselbe Artikel erneut geklickt wird → Markierung löschen
-  if(artikel[i].markiert){
-    artikel.forEach(a => a.markiert = false);
-  } else {
+  artikel[i].markiert = !artikel[i].markiert;
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  renderTable();
+} else {
     // Alle anderen Markierungen entfernen
     artikel.forEach(a => a.markiert = false);
     artikel[i].markiert = true;
@@ -795,6 +809,16 @@ searchInp.oninput = () => {
 
 /* ===== Start ===== */
 renderTable();
+
+// ✅ Nur visuelle blaue Auswahl – keine Sicherung
+function selectRow(i){
+  if(selectedRowIndex === i){
+    selectedRowIndex = -1;      // erneut klicken → aus
+  } else {
+    selectedRowIndex = i;       // immer nur ein Artikel
+  }
+  renderTable();
+}
 </script>
 
 </body>

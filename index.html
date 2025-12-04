@@ -116,14 +116,14 @@ td:nth-child(3){
 }
 
 
-/* ✅ Nr & Artikel jetzt wirklich gleich groß & größer */
+/* ✅ Nr & Artikel sichtbar größer */
 td:nth-child(2),
 td:nth-child(3){
   font-size:13px !important;
   font-weight:600;
 }
 
-/* ✅ Separate blaue Auswahl (unabhängig vom Stern, ohne Speicherung) */
+/* ✅ Nur visuelle blaue Auswahl (extra zum Stern) */
 .selectedRow{
   background:#0b2a4a !important;
 }
@@ -260,7 +260,7 @@ let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let sales   = JSON.parse(localStorage.getItem("lagerSales") || "[]");
 let editIndex = -1;
 let currentSaleIndex = -1;
-let selectedRowIndex = -1; // ✅ nur visuelle Markierung, keine Sicherung
+let selectedRowIndex = -1; // ✅ nur visuell, keine Sicherung
 
 /* ===== Artikelnummern-Logik ===== */
 
@@ -427,13 +427,21 @@ function updateQty(i,val){
 
 function toggleMark(i){
   autoBackup("markierung");
-  artikel[i].markiert = !artikel[i].markiert;
+
+  // Wenn derselbe Artikel erneut geklickt wird → Markierung löschen
+  if(artikel[i].markiert){
+    artikel.forEach(a => a.markiert = false);
+  } else {
+    // Alle anderen Markierungen entfernen
+    artikel.forEach(a => a.markiert = false);
+    artikel[i].markiert = true;
+  }
+
   localStorage.setItem("lagerData", JSON.stringify(artikel));
   renderTable();
 }
 
 /* ===== Pop-up Logik (Neu + Bearbeiten) ===== */
- (Neu + Bearbeiten) ===== */
 
 const btnAdd    = document.getElementById("btnAdd");
 const btnSave   = document.getElementById("btnSave");
@@ -803,12 +811,12 @@ searchInp.oninput = () => {
 /* ===== Start ===== */
 renderTable();
 
-// ✅ Nur visuelle blaue Auswahl – keine Sicherung
+// ✅ Nur visuelle Auswahl – kein Backup, keine Speicherung
 function selectRow(i){
   if(selectedRowIndex === i){
-    selectedRowIndex = -1;      // erneut klicken → aus
+    selectedRowIndex = -1;   // nochmal klicken → blau aus
   } else {
-    selectedRowIndex = i;       // immer nur ein Artikel
+    selectedRowIndex = i;    // immer nur eine Zeile
   }
   renderTable();
 }

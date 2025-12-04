@@ -7,63 +7,15 @@
 
 <style>
 body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:hidden;overscroll-behavior:none;}
-#topbar{
-  position:fixed;
-  top:0;
-  left:0;
-  right:0;
-  padding:8px 10px;
-  background:#000;
-  z-index:5000;
-  border-bottom:2px solid #333;
-}
-#counterWrapper{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:6px;
-}
-.counter-box{
-  padding:6px 8px;
-  border:1px solid #444;
-  border-radius:8px;
-  background:#000;
-}
-.counter-title{
-  font-size:10px;
-  color:#bbb;
-  margin-bottom:2px;
-}
-.counter-value{
-  font-size:15px;
-  font-weight:bold;
-}
+#topbar{position:fixed;top:0;left:0;right:0;padding:8px 10px;background:#000;z-index:5000;border-bottom:2px solid #333;}
+#counterWrapper{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;}
+.counter-box{padding:6px 8px;border:1px solid #444;border-radius:8px;background:#000;}
+.counter-title{font-size:10px;color:#bbb;margin-bottom:2px;}
+.counter-value{font-size:15px;font-weight:bold;}
 #searchRow{margin-top:6px;}
-#search{
-  width:100%;
-  padding:8px;
-  border-radius:8px;
-  background:#111;
-  border:1px solid #444;
-  color:white;
-  box-sizing:border-box;
-  font-size:12px;
-}
-#buttonRow{
-  margin-top:8px;
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-}
-#buttonRow button{
-  flex:1;
-  padding:8px 4px;
-  font-size:10px;
-  color:#bbb;
-  border-radius:10px;
-  background:#000;
-  border:1px solid #444;
-  font-weight:bold;
-}
+#search{width:100%;padding:8px;border-radius:8px;background:#111;border:1px solid #444;color:white;box-sizing:border-box;font-size:12px;}
+#buttonRow{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;}
+#buttonRow button{flex:1;padding:8px 4px;font-size:10px;color:#bbb;border-radius:10px;background:#000;border:1px solid #444;font-weight:bold;}
 
 #tableContainer{
   position:fixed;
@@ -80,8 +32,8 @@ body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:
 }
 
 table{width:100%;border-collapse:collapse;}
-th{background:#111;position:sticky;top:0;z-index:200;padding:6px;color:#bbb;font-size:10px;white-space:nowrap;}
-td{padding:5px;font-size:11px;border-bottom:1px solid #222;white-space:nowrap;}
+th{background:#111;position:sticky;top:0;z-index:200;padding:6px;color:#bbb;font-size:9px;white-space:nowrap;}
+td{padding:4px;font-size:9px;border-bottom:1px solid #222;white-space:nowrap;}
 .marked{background:#222;}
 .iconCell span{cursor:pointer;margin-right:8px;}
 .iconCell span.delete{margin-left:18px;}
@@ -338,8 +290,8 @@ function renderTable(){
       <td>${a.ort || ""}</td>
       <td>${a.datum ? formatDate(a.datum) : ""}</td>
       <td class="iconCell">
-        <span onclick="viewImg(${i})">📷</span>
-        <span onclick="viewNote(${i})">📝</span>
+        <span onclick="viewImg(${i})" style="opacity:${a.bild ? '1' : '0.3'}">📷</span>
+        <span onclick="viewNote(${i})" style="opacity:${a.notiz ? '1' : '0.3'}">📝</span>
         <span onclick="editArtikel(${i})">✏️</span>
         <span onclick="sellArtikel(${i})">🛒</span>
         <span class="delete" onclick="del(${i})">🗑</span>

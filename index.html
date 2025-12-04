@@ -72,6 +72,7 @@ body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:
 #tableContainer{
   position:fixed;
   left:0;right:0;bottom:0;
+  top:170px; /* Fallback, wird von adjustTableTop dynamisch überschrieben */
   overflow-y:auto;overflow-x:auto;
   overscroll-behavior:none;
   touch-action:pan-x pan-y;
@@ -79,6 +80,7 @@ body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:
   z-index:100;
   padding-bottom:calc(env(safe-area-inset-bottom) + 16px);
 }
+
 
 table{width:100%;border-collapse:collapse;}
 th{

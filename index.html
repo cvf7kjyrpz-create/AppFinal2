@@ -32,8 +32,8 @@ body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:
 }
 
 table{width:100%;border-collapse:collapse;}
-th{background:#111;position:sticky;top:0;z-index:200;padding:6px;color:#bbb;font-size:10px;white-space:nowrap;}
-td{padding:5px;font-size:11px;border-bottom:1px solid #222;white-space:nowrap;}
+th{background:#111;position:sticky;top:0;z-index:200;padding:6px;color:#bbb;font-size:9px;white-space:nowrap;}
+td{padding:4px;font-size:9px;border-bottom:1px solid #222;white-space:nowrap;}
 .marked{background:#222;}
 .iconCell span{cursor:pointer;margin-right:8px;}
 .iconCell span.delete{margin-left:18px;}
@@ -203,7 +203,7 @@ let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let sales   = JSON.parse(localStorage.getItem("lagerSales") || "[]");
 let editIndex = -1;
 let currentSaleIndex = -1;
-let selectedRowIndex = -1; // ✅ nur visuelle Einzel-Auswahl
+let selectedRowIndex = -1;
 
 /* ===== Artikelnummern-Logik ===== */
 
@@ -746,7 +746,7 @@ searchInp.oninput = () => {
 /* ===== Start ===== */
 renderTable();
 
-// ✅ Blau-Markierung: nur visuelle Auswahl, nicht gespeichert
+// ✅ Blau-Markierung: nur visuell, nicht gespeichert
 function selectRow(i){
   if(selectedRowIndex === i){
     selectedRowIndex = -1;

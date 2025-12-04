@@ -40,6 +40,7 @@ td{padding:4px;font-size:9px;border-bottom:1px solid #222;white-space:nowrap;}
 input.miniQty{width:42px;background:#111;color:white;border:1px solid #444;border-radius:5px;text-align:center;}
 
 #popup,#viewPopup,#salePopup,#salesHistoryPopup{
+  overflow-x:auto;
 position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
 background:#111;padding:16px;border:2px solid #444;border-radius:12px;
 width:360px;max-width:92vw;overflow:hidden;display:none;z-index:9999;
@@ -190,6 +191,11 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 
 <!-- Verkaufs-Historie -->
 <div id="salesHistoryPopup">
+<div style="display:flex;gap:6px;margin-bottom:8px;">
+  <input id="salesSearch" placeholder="Suchen…" style="flex:1;padding:6px;font-size:11px;">
+  <input id="invoiceNrInput" placeholder="Rechnungsnr." style="width:110px;padding:6px;font-size:11px;">
+</div>
+
   <h3>Verkäufe</h3>
   <table>
     <thead>
@@ -767,6 +773,20 @@ function selectRow(i){
   }
   renderTable();
 }
+
+function editSale(i){
+  const s = sales[i];
+  const newNr = prompt("Rechnungsnummer:", s.rechnung || "");
+  if(newNr !== null){
+    s.rechnung = newNr;
+    localStorage.setItem("salesData", JSON.stringify(sales));
+    renderSales();
+  }
+}
+
+document.getElementById("salesSearch")?.addEventListener("input", renderSales);
+
+
 </script>
 
 

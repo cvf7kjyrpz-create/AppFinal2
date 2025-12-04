@@ -281,7 +281,7 @@ function renderTable(){
     if(!a || a.menge <= 0) return; // nur Artikel mit Bestand anzeigen
 
     const tr = document.createElement("tr");
-    tr.onclick = () => selectRow(i);
+    tr.onclick = (e) => { if(e.target.tagName !== 'INPUT') selectRow(i); };
     if(a.markiert) tr.classList.add("marked"); if(i === selectedRowIndex) tr.classList.add("selectedRow");
     const gesamt = (a.preis * a.menge).toFixed(2);
 
@@ -290,7 +290,7 @@ function renderTable(){
       <td>${a.artnr || ""}</td>
       <td>${a.name || ""}</td>
       <td>${a.zustand || ""}</td>
-      <td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
+      <td><input class="miniQty" type="number" value="${a.menge}" onblur="updateQty(${i},this.value)"></td>
       <td>${a.groesse || ""}</td>
       <td>${isNaN(a.preis) ? "" : a.preis.toFixed(2)}</td>
       <td>${isNaN(a.preis) ? "" : gesamt}</td>
@@ -609,7 +609,7 @@ function openSalesHistory(){
   salesBody.innerHTML = "";
   sales.forEach((s,idx)=>{
     const tr = document.createElement("tr");
-    tr.onclick = () => selectRow(i);
+    tr.onclick = (e) => { if(e.target.tagName !== 'INPUT') selectRow(i); };
     tr.innerHTML = `
       <td>${s.datum ? formatDate(s.datum) : ""}</td>
       <td>${s.artnr || ""}</td>

@@ -75,8 +75,9 @@ body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;overflow:
 
 table{width:100%;border-collapse:collapse;}
 th{background:#111;position:sticky;top:0;z-index:200;padding:6px;color:#bbb;font-size:10px;white-space:nowrap;}
-td{padding:5px;font-size:11px;border-bottom:1px solid #222;white-space:nowrap;}
+td{padding:5px;font-size:10px;border-bottom:1px solid #222;white-space:nowrap;}
 .marked{background:#222;}
+.selectedRow{background:#0b2a4a !important;}
 .iconCell span{cursor:pointer;margin-right:8px;}
 .iconCell span.delete{margin-left:18px;}
 input.miniQty{width:42px;background:#111;color:white;border:1px solid #444;border-radius:5px;text-align:center;}
@@ -115,15 +116,7 @@ td:nth-child(3){
   font-size:12px;
 }
 
-
-/* ✅ Kompaktere Schrift für die gesamte Tabelle */
-table td,
-table th{
-  font-size:10px !important;
-  font-weight:400 !important;
-}
 </style>
-
 </head>
 
 <body>
@@ -255,6 +248,7 @@ let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let sales   = JSON.parse(localStorage.getItem("lagerSales") || "[]");
 let editIndex = -1;
 let currentSaleIndex = -1;
+let selectedRowIndex = -1; // nur visuelle Zeilenauswahl
 
 /* ===== Artikelnummern-Logik ===== */
 
@@ -313,8 +307,7 @@ function formatDate(d){
 
 /* ===== Auto-Backup (wie "Sichern") ===== */
 
-function // autoBackup disabled (nur manueller Save erlaubt)
-// autoBackup(reason){
+function autoBackup(reason){
   const data = { artikel, sales };
   const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
   const a    = document.createElement("a");
@@ -333,13 +326,14 @@ function renderTable(){
     if(!a || a.menge <= 0) return; // nur Artikel mit Bestand anzeigen
 
     const tr = document.createElement("tr");
-    if(a.markiert) tr.classList.add("marked"); if(typeof selectedRowIndex !== 'undefined' && i === selectedRowIndex) tr.classList.add("selectedRow");
+    if(a.markiert) tr.classList.add("marked");
+    if(i === selectedRowIndex) tr.classList.add("selectedRow");
     const gesamt = (a.preis * a.menge).toFixed(2);
 
     tr.innerHTML = `
       <td onclick="toggleMark(${i})">${a.markiert ? "⭐" : "☆"}</td>
       <td>${a.artnr || ""}</td>
-      <td onclick="toggleMark(${i})" style="cursor:pointer;">${a.name || ""}</td>
+      <td onclick="selectRow(${i})" style="cursor:pointer;">${a.name || ""}</td>
       <td>${a.zustand || ""}</td>
       <td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
       <td>${a.groesse || ""}</td>
@@ -411,8 +405,7 @@ function updateCounters(){
 /* ===== Menge direkt in Tabelle ===== */
 
 function updateQty(i,val){
-  // autoBackup disabled (nur manueller Save erlaubt)
-// autoBackup("menge");
+  autoBackup("menge");
   artikel[i].menge = parseInt(val) || 0;
   localStorage.setItem("lagerData", JSON.stringify(artikel));
   renderTable();
@@ -421,7 +414,7 @@ function updateQty(i,val){
 /* ===== Markieren (⭐) ===== */
 
 function toggleMark(i){
-  // ✅ Stern nur lokal setzen – KEIN Backup, KEIN Datei-Download
+  // ⭐ Stern nur lokal setzen – KEIN automatisches Backup / Download
   artikel[i].markiert = !artikel[i].markiert;
   localStorage.setItem("lagerData", JSON.stringify(artikel));
   renderTable();
@@ -463,8 +456,7 @@ btnCancel.onclick = () => {
 };
 
 btnSave.onclick = () => {
-  // autoBackup disabled (nur manueller Save erlaubt)
-// autoBackup("speichern");
+  autoBackup("speichern");
   if (editIndex === -1){
     // neuer Artikel
     const nextNr     = commitNextArtNr();
@@ -561,8 +553,7 @@ const viewPopup = document.getElementById("viewPopup");
 
 function del(i){
   if(confirm("Wirklich löschen?")){
-    // autoBackup disabled (nur manueller Save erlaubt)
-// autoBackup("löschen");
+    autoBackup("löschen");
     artikel.splice(i,1);
     localStorage.setItem("lagerData", JSON.stringify(artikel));
     renderTable();
@@ -613,8 +604,7 @@ btnSaleCancel.onclick = () => {
 
 btnSaleOk.onclick = () => {
   if(currentSaleIndex === -1) return;
-  // autoBackup disabled (nur manueller Save erlaubt)
-// autoBackup("verkauf");
+  autoBackup("verkauf");
   const a = artikel[currentSaleIndex];
 
   const mengeV = parseInt(s_menge.value) || 0;
@@ -696,8 +686,7 @@ function stornoSale(index){
   if(!s) return;
   if(!confirm("Verkauf stornieren und Bestand wieder erhöhen?")) return;
 
-  // autoBackup disabled (nur manueller Save erlaubt)
-// autoBackup("storno");
+  autoBackup("storno");
 
   // passenden Artikel suchen (nach Artikelnummer)
   const art = artikel.find(a => a.artnr === s.artnr);
@@ -729,6 +718,16 @@ function stornoSale(index){
   renderTable();
 }
 
+// Nur visuelle blaue Auswahl – keine Speicherung
+function selectRow(i){
+  if(selectedRowIndex === i){
+    selectedRowIndex = -1;
+  } else {
+    selectedRowIndex = i;
+  }
+  renderTable();
+}
+
 /* ===== Sichern / Laden / PDF / Suche ===== */
 
 const btnExport = document.getElementById("btnExport");
@@ -737,8 +736,18 @@ const btnPDF    = document.getElementById("btnPDF");
 const searchInp = document.getElementById("search");
 
 btnExport.onclick = () => {
-  // autoBackup disabled (nur manueller Save erlaubt)
-// autoBackup("manuell");
+  const data = { artikel, sales };
+  const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
+  const a    = document.createElement("a");
+  a.href     = URL.createObjectURL(blob);
+
+  let nr = parseInt(localStorage.getItem("lagerBackupCounter") || "0", 10);
+  nr++;
+  localStorage.setItem("lagerBackupCounter", nr);
+
+  const nrStr = String(nr).padStart(4,"0");
+  a.download = "lager_backup_" + nrStr + ".json";
+  a.click();
 };
 
 btnImport.onclick = () => {
@@ -809,61 +818,7 @@ searchInp.oninput = () => {
 
 /* ===== Start ===== */
 renderTable();
-
-// ✅ Nur visuelle blaue Auswahl – niemals speichern
-let selectedRowIndex = -1;
-function selectRow(i){
-  if(selectedRowIndex === i){
-    selectedRowIndex = -1;
-  } else {
-    selectedRowIndex = i;
-  }
-  renderTable();
-}
 </script>
-
-
-
-<script>
-// ✅ Zusätzlicher sicherer Speicher-Handler (nummerierte Backups)
-// Greift nur zusätzlich, ohne die Original-Logik zu verändern
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("btnExport");
-  if(!btn) return;
-
-  btn.addEventListener("click", (e) => {
-    try{
-      const data = { artikel, sales };
-      const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
-      const a    = document.createElement("a");
-      a.href     = URL.createObjectURL(blob);
-
-      let nr = parseInt(localStorage.getItem("lagerBackupCounter") || "0", 10);
-      nr++;
-      localStorage.setItem("lagerBackupCounter", nr);
-
-      const nrStr = String(nr).padStart(4, "0");
-      a.download = "lager_backup_" + nrStr + ".json";
-      a.click();
-    }catch(err){
-      console.error(err);
-      alert("Speichern fehlgeschlagen");
-    }
-  });
-});
-
-// ✅ Nur visuelle blaue Auswahl – niemals speichern
-let selectedRowIndex = -1;
-function selectRow(i){
-  if(selectedRowIndex === i){
-    selectedRowIndex = -1;
-  } else {
-    selectedRowIndex = i;
-  }
-  renderTable();
-}
-</script>
-
 
 </body>
 </html>

@@ -108,6 +108,13 @@ img.preview{max-width:100%;border-radius:8px;margin-top:10px;}
 #salesHistoryPopup h3{margin-top:0;font-size:16px;}
 #salesHistoryPopup table{width:100%;border-collapse:collapse;font-size:11px;}
 #salesHistoryPopup th,#salesHistoryPopup td{border:1px solid #444;padding:4px;white-space:nowrap;}
+
+/* ✅ Nr & Artikel gleich große Schrift */
+td:nth-child(2),
+td:nth-child(3){
+  font-size:12px;
+}
+
 </style>
 </head>
 
@@ -323,7 +330,7 @@ function renderTable(){
     tr.innerHTML = `
       <td onclick="toggleMark(${i})">${a.markiert ? "⭐" : "☆"}</td>
       <td>${a.artnr || ""}</td>
-      <td>${a.name || ""}</td>
+      <td onclick="toggleMark(${i})" style="cursor:pointer;">${a.name || ""}</td>
       <td>${a.zustand || ""}</td>
       <td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
       <td>${a.groesse || ""}</td>
@@ -405,7 +412,16 @@ function updateQty(i,val){
 
 function toggleMark(i){
   autoBackup("markierung");
-  artikel[i].markiert = !artikel[i].markiert;
+
+  // Wenn derselbe Artikel erneut geklickt wird → Markierung löschen
+  if(artikel[i].markiert){
+    artikel.forEach(a => a.markiert = false);
+  } else {
+    // Alle anderen Markierungen entfernen
+    artikel.forEach(a => a.markiert = false);
+    artikel[i].markiert = true;
+  }
+
   localStorage.setItem("lagerData", JSON.stringify(artikel));
   renderTable();
 }

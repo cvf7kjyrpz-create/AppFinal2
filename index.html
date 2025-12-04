@@ -290,8 +290,8 @@ function renderTable(){
       <td>${a.ort || ""}</td>
       <td>${a.datum ? formatDate(a.datum) : ""}</td>
       <td class="iconCell">
-        <span onclick="viewImg(${i})">📷</span>
-        <span onclick="viewNote(${i})">📝</span>
+        <span onclick="viewImg(${i})" style="opacity:${a.bild ? '1' : '0.3'}">${a.bild ? "🖼️" : "📷"}</span>
+        <span onclick="viewNote(${i})" style="opacity:${a.notiz ? '1' : '0.3'}">${a.notiz ? "📝" : "🗒️"}</span>
         <span onclick="editArtikel(${i})">✏️</span>
         <span onclick="sellArtikel(${i})">🛒</span>
         <span class="delete" onclick="del(${i})">🗑</span>

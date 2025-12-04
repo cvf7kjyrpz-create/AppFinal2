@@ -116,19 +116,14 @@ td:nth-child(3){
 }
 
 
-/* ✅ Nr & Artikel sichtbar größer */
-td:nth-child(2),
-td:nth-child(3){
-  font-size:13px !important;
-  font-weight:600;
+/* ✅ Einheitliche, etwas kleinere Schrift für ALLE Tabelleninhalte */
+table td,
+table th{
+  font-size:11px !important;
+  font-weight:400 !important;
 }
-
-/* ✅ Nur visuelle blaue Auswahl (extra zum Stern) */
-.selectedRow{
-  background:#0b2a4a !important;
-}
-
 </style>
+
 </head>
 
 <body>
@@ -260,7 +255,6 @@ let artikel = JSON.parse(localStorage.getItem("lagerData") || "[]");
 let sales   = JSON.parse(localStorage.getItem("lagerSales") || "[]");
 let editIndex = -1;
 let currentSaleIndex = -1;
-let selectedRowIndex = -1; // ✅ nur visuell, keine Sicherung
 
 /* ===== Artikelnummern-Logik ===== */
 
@@ -339,13 +333,12 @@ function renderTable(){
 
     const tr = document.createElement("tr");
     if(a.markiert) tr.classList.add("marked");
-    if(i === selectedRowIndex) tr.classList.add("selectedRow");
     const gesamt = (a.preis * a.menge).toFixed(2);
 
     tr.innerHTML = `
       <td onclick="toggleMark(${i})">${a.markiert ? "⭐" : "☆"}</td>
       <td>${a.artnr || ""}</td>
-      <td onclick="selectRow(${i})" style="cursor:pointer;">${a.name || ""}</td>
+      <td onclick="toggleMark(${i})" style="cursor:pointer;">${a.name || ""}</td>
       <td>${a.zustand || ""}</td>
       <td><input class="miniQty" type="number" value="${a.menge}" oninput="updateQty(${i},this.value)"></td>
       <td>${a.groesse || ""}</td>
@@ -427,11 +420,10 @@ function updateQty(i,val){
 
 function toggleMark(i){
   autoBackup("markierung");
-
-  // Wenn derselbe Artikel erneut geklickt wird → Markierung löschen
-  if(artikel[i].markiert){
-    artikel.forEach(a => a.markiert = false);
-  } else {
+  artikel[i].markiert = !artikel[i].markiert;   // ✅ mehrere Sterne möglich
+  localStorage.setItem("lagerData", JSON.stringify(artikel));
+  renderTable();
+} else {
     // Alle anderen Markierungen entfernen
     artikel.forEach(a => a.markiert = false);
     artikel[i].markiert = true;
@@ -739,7 +731,20 @@ const btnPDF    = document.getElementById("btnPDF");
 const searchInp = document.getElementById("search");
 
 btnExport.onclick = () => {
-  autoBackup("manuell");
+  const data = { artikel, sales };
+  const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
+  const a    = document.createElement("a");
+  a.href     = URL.createObjectURL(blob);
+
+  // ✅ Fortlaufende Nummer für saubere Sortierung
+  let nr = parseInt(localStorage.getItem("lagerBackupCounter") || "0", 10);
+  nr++;
+  localStorage.setItem("lagerBackupCounter", nr);
+
+  const nrStr = String(nr).padStart(4, "0"); // 0001, 0002, 0003 ...
+  a.download = "lager_backup_" + nrStr + ".json";
+
+  a.click();
 };
 
 btnImport.onclick = () => {
@@ -810,16 +815,6 @@ searchInp.oninput = () => {
 
 /* ===== Start ===== */
 renderTable();
-
-// ✅ Nur visuelle Auswahl – kein Backup, keine Speicherung
-function selectRow(i){
-  if(selectedRowIndex === i){
-    selectedRowIndex = -1;   // nochmal klicken → blau aus
-  } else {
-    selectedRowIndex = i;    // immer nur eine Zeile
-  }
-  renderTable();
-}
 </script>
 
 </body>

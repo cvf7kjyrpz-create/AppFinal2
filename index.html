@@ -430,17 +430,10 @@ function toggleMark(i){
   artikel[i].markiert = !artikel[i].markiert;
   localStorage.setItem("lagerData", JSON.stringify(artikel));
   renderTable();
-} else {
-    // Alle anderen Markierungen entfernen
-    artikel.forEach(a => a.markiert = false);
-    artikel[i].markiert = true;
-  }
-
-  localStorage.setItem("lagerData", JSON.stringify(artikel));
-  renderTable();
 }
 
 /* ===== Pop-up Logik (Neu + Bearbeiten) ===== */
+ (Neu + Bearbeiten) ===== */
 
 const btnAdd    = document.getElementById("btnAdd");
 const btnSave   = document.getElementById("btnSave");

@@ -260,9 +260,8 @@ function autoBackup(reason){
   const data = { artikel, sales };
   const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
   const a    = document.createElement("a");
-  const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
   a.href     = URL.createObjectURL(blob);
-  a.download = "lager_backup_"+(reason||"aktion")+"_"+stamp+".json";
+  a.download = "lager_backup.json";  // immer gleicher Dateiname → iPhone fragt nach Überschreiben
   a.click();
 }
 

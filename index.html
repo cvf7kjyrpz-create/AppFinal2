@@ -115,15 +115,7 @@ td:nth-child(3){
   font-size:12px;
 }
 
-
-/* ✅ Einheitliche, etwas kleinere Schrift für ALLE Tabelleninhalte */
-table td,
-table th{
-  font-size:11px !important;
-  font-weight:400 !important;
-}
 </style>
-
 </head>
 
 <body>
@@ -420,10 +412,11 @@ function updateQty(i,val){
 
 function toggleMark(i){
   autoBackup("markierung");
-  artikel[i].markiert = !artikel[i].markiert;   // ✅ mehrere Sterne möglich
-  localStorage.setItem("lagerData", JSON.stringify(artikel));
-  renderTable();
-} else {
+
+  // Wenn derselbe Artikel erneut geklickt wird → Markierung löschen
+  if(artikel[i].markiert){
+    artikel.forEach(a => a.markiert = false);
+  } else {
     // Alle anderen Markierungen entfernen
     artikel.forEach(a => a.markiert = false);
     artikel[i].markiert = true;
@@ -730,20 +723,8 @@ const btnImport = document.getElementById("btnImport");
 const btnPDF    = document.getElementById("btnPDF");
 const searchInp = document.getElementById("search");
 
-
-  const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
-  const a    = document.createElement("a");
-  a.href     = URL.createObjectURL(blob);
-
-  // ✅ Fortlaufende Nummer für saubere Sortierung
-  let nr = parseInt(localStorage.getItem("lagerBackupCounter") || "0", 10);
-  nr++;
-  localStorage.setItem("lagerBackupCounter", nr);
-
-  const nrStr = String(nr).padStart(4, "0"); // 0001, 0002, 0003 ...
-  a.download = "lager_backup_" + nrStr + ".json";
-
-  a.click();
+btnExport.onclick = () => {
+  autoBackup("manuell");
 };
 
 btnImport.onclick = () => {
@@ -814,20 +795,23 @@ searchInp.oninput = () => {
 
 /* ===== Start ===== */
 renderTable();
+</script>
 
-// ✅ SICHERER SPEICHER-HANDLER (nummerierte Backups, ohne Button-Ausfall)
+
+<script>
+// ✅ Zusätzlicher sicherer Speicher-Handler (nummerierte Backups)
+// Greift nur zusätzlich, ohne die Original-Logik zu verändern
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("btnExport");
   if(!btn) return;
 
-  btn.addEventListener("click", () => {
+  btn.addEventListener("click", (e) => {
     try{
       const data = { artikel, sales };
       const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
       const a    = document.createElement("a");
       a.href     = URL.createObjectURL(blob);
 
-      // fortlaufende Nummer
       let nr = parseInt(localStorage.getItem("lagerBackupCounter") || "0", 10);
       nr++;
       localStorage.setItem("lagerBackupCounter", nr);
@@ -835,12 +819,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const nrStr = String(nr).padStart(4, "0");
       a.download = "lager_backup_" + nrStr + ".json";
       a.click();
-    }catch(e){
-      alert("Fehler beim Speichern: " + e.message);
+    }catch(err){
+      console.error(err);
+      alert("Speichern fehlgeschlagen");
     }
   });
 });
-
 </script>
 
 </body>
